@@ -1,0 +1,26 @@
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--body-gap, 14px);
+  min-height: 0;
+  padding: 18px var(--gutter) calc(30px + var(--safe-bottom));
+}
+
+.grid > * {
+  min-width: 0;
+}
+
+@media (min-width: 960px) {
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 18px;
+  }
+
+  /* عناصر تمتد على العمودين (حالة فراغ، زر إضافة…) */
+  .grid > [data-span='full'] {
+    grid-column: 1 / -1;
+  }
+}

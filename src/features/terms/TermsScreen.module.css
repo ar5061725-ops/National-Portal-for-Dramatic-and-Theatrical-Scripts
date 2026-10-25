@@ -1,0 +1,21 @@
+.points {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.point {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.point svg {
+  margin-top: 3px;
+  color: var(--success);
+}

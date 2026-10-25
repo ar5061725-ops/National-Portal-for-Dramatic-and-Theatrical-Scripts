@@ -1,0 +1,24 @@
+.toast {
+  position: fixed;
+  inset-inline: 0;
+  margin-inline: auto;
+  width: fit-content;
+  bottom: calc(110px + env(safe-area-inset-bottom));
+  max-width: min(80%, 420px);
+  padding: 12px 20px;
+  border-radius: 14px;
+  background: #0f2a44;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.toast[data-visible='true'] {
+  opacity: 1;
+}

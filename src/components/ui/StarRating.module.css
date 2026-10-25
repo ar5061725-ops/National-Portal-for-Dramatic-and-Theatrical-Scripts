@@ -1,0 +1,23 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.on {
+  fill: var(--gold);
+  stroke: var(--gold-dark);
+  stroke-width: 0.8;
+}
+
+.off {
+  fill: #efeadf;
+  stroke: #d9cfb8;
+  stroke-width: 0.8;
+}
+
+.offDark {
+  fill: rgba(255, 255, 255, 0.2);
+  stroke: var(--gold-dark);
+  stroke-width: 0.8;
+}

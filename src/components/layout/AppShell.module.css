@@ -1,0 +1,21 @@
+.shell {
+  display: flex;
+  justify-content: center;
+  min-height: 100dvh;
+}
+
+.frame {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--frame-max);
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+@media (min-width: 600px) {
+  .frame {
+    box-shadow: 0 0 60px rgba(11, 47, 82, 0.18);
+  }
+}

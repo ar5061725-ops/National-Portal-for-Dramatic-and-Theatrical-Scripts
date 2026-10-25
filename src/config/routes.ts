@@ -1,0 +1,18 @@
+export const ROUTES = {
+  splash: '/',
+  home: '/home',
+  scripts: '/scripts',
+  scriptDetail: (id: string) => `/scripts/${id}`,
+  login: '/login',
+  submit: '/submit',
+  payment: '/payment',
+  requests: '/requests',
+  feedback: (requestId: string) => `/requests/${requestId}/feedback`,
+  certificate: (scriptId: string) => `/certificate/${scriptId}`,
+  certificatePrint: (scriptId: string) => `/certificate/${scriptId}/print`,
+  committee: '/committee',
+  profile: '/profile',
+  notifications: '/notifications',
+  receipts: '/receipts',
+  terms: '/terms',
+} as const;

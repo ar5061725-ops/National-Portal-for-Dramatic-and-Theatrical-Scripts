@@ -1,0 +1,91 @@
+.identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 3px solid var(--gold);
+  background: #fff;
+  color: var(--primary);
+  font-size: 36px;
+  font-weight: 700;
+}
+
+.name {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.role {
+  font-size: 14px;
+  color: #dde9f6;
+}
+
+.body {
+  margin-top: -46px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  padding: 14px 6px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(18, 90, 149, 0.12);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 2px;
+}
+
+.stat + .stat {
+  border-inline-start: 1px solid var(--divider);
+}
+
+.statValue {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+}
+
+.infoRow + .infoRow {
+  border-top: 1px solid #eef2f7;
+}
+
+.infoLabel {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.infoValue {
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}

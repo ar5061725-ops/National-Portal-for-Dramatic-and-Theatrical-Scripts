@@ -1,0 +1,164 @@
+:root {
+  --primary: #125a95;
+  --primary-dark: #0e4a7d;
+  --primary-tint: #e3eef9;
+  --primary-soft: #eaf2fa;
+  --bg: #f1f5fa;
+  --bg-outer: #dde6f0;
+  --surface: #ffffff;
+  --surface-muted: #f8fbfe;
+  --ink: #0f2a44;
+  --ink-soft: #1f2f45;
+  --muted: #55617a;
+  --muted-2: #7a879a;
+  --border: #dce6f1;
+  --border-strong: #d3e1ef;
+  --divider: #e3eaf2;
+
+  --gold: #d4af37;
+  --gold-dark: #b8922a;
+  --gold-soft: #fbf7ec;
+  --gold-border: #e8d9ae;
+
+  --success: #1e7a44;
+  --success-ink: #1e5631;
+  --success-bg: #e6f4ea;
+  --success-border: #cbe8d5;
+  --warning: #c26a12;
+  --warning-ink: #8a4a0b;
+  --warning-bg: #fdf0e1;
+  --danger: #b42318;
+  --danger-ink: #8f1d14;
+  --danger-bg: #fdecea;
+  --danger-border: #f1b5ae;
+
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 6px 24px rgba(18, 90, 149, 0.1);
+  --shadow-cta: 0 10px 24px rgba(18, 90, 149, 0.28);
+
+  --tap: 44px;
+  --gutter: 16px;
+  --frame-max: 100%;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  color-scheme: light;
+}
+
+/* الهاتف أولاً: الإطار بعرض الشاشة. نوسّعه تدريجياً على الشاشات الأكبر. */
+@media (min-width: 600px) {
+  :root {
+    --frame-max: 560px;
+    --gutter: 20px;
+  }
+}
+
+@media (min-width: 960px) {
+  :root {
+    --frame-max: 900px;
+    --gutter: 28px;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body), system-ui, sans-serif;
+  background: var(--bg-outer);
+  color: var(--ink);
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a,
+button,
+label,
+input,
+textarea {
+  touch-action: manipulation;
+}
+
+:focus-visible {
+  outline: 3px solid rgba(18, 90, 149, 0.5);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.pressable {
+  transition:
+    transform 0.1s ease,
+    opacity 0.1s ease;
+}
+
+.pressable:active:not(:disabled) {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pressable {
+    transition: none;
+  }
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
+}

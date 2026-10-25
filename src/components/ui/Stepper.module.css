@@ -1,0 +1,47 @@
+.root {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--primary);
+}
+
+.upcoming {
+  color: #dde9f6;
+}
+.upcoming .dot {
+  background: transparent;
+  color: inherit;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.line {
+  flex: 1;
+  min-width: 12px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.3);
+}
+.lineActive {
+  background: #fff;
+}

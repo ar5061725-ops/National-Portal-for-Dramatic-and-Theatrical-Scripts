@@ -1,0 +1,95 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1.5px solid transparent;
+  font-family: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.block {
+  display: flex;
+  width: 100%;
+}
+
+.sm {
+  min-height: 44px;
+  padding: 0 16px;
+  font-size: 14px;
+  border-radius: 12px;
+}
+.md {
+  min-height: 48px;
+  padding: 0 18px;
+  font-size: 15px;
+  border-radius: 14px;
+}
+.lg {
+  min-height: 56px;
+  padding: 0 22px;
+  font-size: 17px;
+  border-radius: 16px;
+}
+.xl {
+  min-height: 60px;
+  padding: 0 24px;
+  font-size: 18px;
+  border-radius: 18px;
+}
+
+.elevated {
+  box-shadow: var(--shadow-cta);
+}
+
+.primary {
+  background: var(--primary);
+  color: #fff;
+}
+.secondary {
+  background: var(--primary-tint);
+  color: var(--primary);
+}
+.outline {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  color: var(--primary);
+}
+.gold {
+  background: var(--gold);
+  color: var(--ink);
+}
+.white {
+  background: #fff;
+  color: var(--primary);
+}
+.glass {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+}
+.danger {
+  background: var(--surface);
+  border-color: #f3d3d0;
+  color: var(--danger);
+}
+.dashed {
+  background: var(--surface);
+  border: 2px dashed #9dbad8;
+  color: var(--primary);
+}
+.warning {
+  background: var(--warning);
+  color: #fff;
+}
+.successSoft {
+  background: var(--success-bg);
+  color: var(--success-ink);
+}

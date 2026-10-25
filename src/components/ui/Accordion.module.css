@@ -1,0 +1,67 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item {
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.open {
+  border: 1.5px solid var(--primary);
+}
+
+.heading {
+  margin: 0;
+  font-size: inherit;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 60px;
+  padding: 0 16px;
+  border: none;
+  background: transparent;
+  text-align: right;
+  color: var(--ink);
+}
+
+.number {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--primary-tint);
+  color: var(--primary);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.title {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.chevron {
+  color: var(--primary);
+  transition: transform 0.2s;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.panel {
+  padding: 0 16px 16px;
+}

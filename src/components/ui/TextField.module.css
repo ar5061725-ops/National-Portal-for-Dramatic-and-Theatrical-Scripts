@@ -1,0 +1,55 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.hint {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.control {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  /* 16px يمنع تكبير iOS التلقائي عند التركيز */
+  font-size: 16px;
+  color: var(--ink);
+  outline: none;
+}
+
+.control:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(18, 90, 149, 0.14);
+}
+
+.control[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.textarea {
+  min-height: 130px;
+  padding: 12px 14px;
+  line-height: 1.7;
+  resize: vertical;
+}
+
+.ltr {
+  text-align: right;
+}
+
+.error {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--danger);
+}

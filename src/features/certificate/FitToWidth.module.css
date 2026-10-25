@@ -1,0 +1,21 @@
+.container {
+  width: 100%;
+  overflow: hidden;
+}
+
+.stage {
+  /* التصميم عربي (RTL): نثبّت أصل التحويل على اليمين */
+  transform-origin: top right;
+  margin-inline-start: auto;
+}
+
+@media print {
+  .container {
+    height: auto !important;
+    overflow: visible;
+  }
+
+  .stage {
+    transform: none !important;
+  }
+}

@@ -1,0 +1,48 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.textLink {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.or span {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.formError {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--danger-ink);
+}
+
+.committee {
+  align-self: center;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}

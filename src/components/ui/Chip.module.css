@@ -1,0 +1,16 @@
+.chip {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border-strong);
+  background: var(--surface);
+  color: #3d5a7a;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.chip[aria-pressed='true'] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}

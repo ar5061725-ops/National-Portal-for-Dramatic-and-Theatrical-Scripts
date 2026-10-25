@@ -1,0 +1,93 @@
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.note {
+  display: flex;
+  gap: 12px;
+}
+
+.noteNo {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: var(--warning-bg);
+  color: var(--warning-ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.noteBody {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.noteWhere {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.noteText {
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.drop {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 2px dashed #9dbad8;
+  background: var(--surface-muted);
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.drop:focus-within {
+  outline: 3px solid rgba(18, 90, 149, 0.5);
+  outline-offset: 2px;
+}
+
+.dropText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dropTitle {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.dropStatus {
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.error {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--danger);
+}

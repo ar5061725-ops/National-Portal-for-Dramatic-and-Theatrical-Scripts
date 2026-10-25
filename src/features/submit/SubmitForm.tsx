@@ -1,0 +1,186 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
+import { ROUTES } from '@/config/routes';
+import { GENRES, LOGLINE_MAX, REQUIRED_FILES, getWorkType } from '@/config/submission';
+import { countUploadedFiles, getMissingSteps } from '@/lib/submission';
+import { useSubmission } from '@/providers/SubmissionProvider';
+import type { RequiredFileId, UserAccount } from '@/types';
+import { PageSkeleton } from '@/components/feedback/PageSkeleton';
+import { FormSection } from '@/components/layout/FormSection';
+import { PageBody } from '@/components/layout/PageBody';
+import { BackButton, PageHeader } from '@/components/layout/PageHeader';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { Chip } from '@/components/ui/Chip';
+import { Icon } from '@/components/ui/Icon';
+import { Logo } from '@/components/ui/Logo';
+import { Stepper } from '@/components/ui/Stepper';
+import { TextArea, TextField } from '@/components/ui/TextField';
+import { FileRow } from './FileRow';
+import { WorkTypePicker } from './WorkTypePicker';
+import styles from './SubmitForm.module.css';
+
+const STEPS = ['الحساب', 'بيانات العمل', 'الدفع'];
+
+export function SubmitForm({ user }: { user: UserAccount }) {
+  const router = useRouter();
+  const { draft, hydrated, patch, setType, toggleGenre, setDetail, setFile } = useSubmission();
+  const [showErrors, setShowErrors] = useState(false);
+  const [fileErrors, setFileErrors] = useState<Partial<Record<RequiredFileId, string>>>({});
+
+  if (!hydrated) return <PageSkeleton />;
+
+  const name = draft.name ?? user.name;
+  const phone = draft.phone ?? user.phone;
+  const email = draft.email ?? user.email;
+  const workType = getWorkType(draft.type);
+  const missing = getMissingSteps(draft);
+  const uploaded = countUploadedFiles(draft);
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    if (missing.length > 0) {
+      setShowErrors(true);
+      return;
+    }
+    router.push(ROUTES.payment);
+  }
+
+  return (
+    <>
+      <PageHeader rounded start={<BackButton href={ROUTES.home} />} barTitle="تقديم نص جديد" end={<Logo size={44} />}>
+        <Stepper steps={STEPS} current={1} />
+      </PageHeader>
+
+      <PageBody>
+        <form className={styles.form} onSubmit={handleSubmit} noValidate>
+          <Card padding={18} gap={14}>
+            <div className={styles.welcome}>
+              <span className={styles.initial} aria-hidden="true">
+                {name.charAt(0)}
+              </span>
+              <div className={styles.welcomeText}>
+                <p className={styles.welcomeTitle}>أهلاً بك، {name.split(' ')[0] || name}</p>
+                <p className={styles.welcomeHint}>املأ الخطوات التالية لتقديم نصك للمراجعة</p>
+              </div>
+            </div>
+          </Card>
+
+          <FormSection number={1} title="بيانات المؤلف">
+            <TextField label="الاسم" autoComplete="name" value={name} onChange={(e) => patch({ name: e.target.value })} />
+            <TextField label="رقم الهاتف" type="tel" ltr autoComplete="tel" value={phone} onChange={(e) => patch({ phone: e.target.value })} />
+            <TextField label="البريد الإلكتروني" type="email" ltr autoComplete="email" value={email} onChange={(e) => patch({ email: e.target.value })} />
+          </FormSection>
+
+          <FormSection number={2} title="العمل">
+            <TextField
+              label="عنوان العمل"
+              placeholder="اكتب اسم النص"
+              value={draft.title}
+              error={showErrors && !draft.title.trim() ? 'عنوان العمل مطلوب' : undefined}
+              onChange={(e) => patch({ title: e.target.value })}
+            />
+            <p className={styles.groupLabel}>نوع العمل</p>
+            <WorkTypePicker value={draft.type} onChange={setType} />
+
+            <div className={styles.genreHead}>
+              <span className={styles.groupLabel}>التصنيف</span>
+              <span className={styles.hint}>يمكنك اختيار أكثر من تصنيف</span>
+            </div>
+            <div className={styles.genres} role="group" aria-label="التصنيف">
+              {GENRES.map((genre) => (
+                <Chip key={genre.id} pressed={draft.genres.includes(genre.id)} onClick={() => toggleGenre(genre.id)}>
+                  {genre.label}
+                </Chip>
+              ))}
+            </div>
+          </FormSection>
+
+          <FormSection number={3} title={workType.detailsTitle}>
+            <div className={styles.twoCols}>
+              {workType.fields.map((field) => {
+                const key = `${workType.id}.${field.id}`;
+                return (
+                  <TextField
+                    key={key}
+                    label={field.label}
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    placeholder={field.placeholder}
+                    value={draft.details[key] ?? ''}
+                    onChange={(e) => setDetail(key, e.target.value)}
+                  />
+                );
+              })}
+            </div>
+          </FormSection>
+
+          <FormSection number={4} title="اللوجلاين">
+            <TextArea
+              label="جملة أو جملتان تلخّصان فكرة العمل: البطل، هدفه، وما يقف في طريقه"
+              maxLength={LOGLINE_MAX}
+              placeholder="مثال: بعد رحيل الجد، يكتشف أبناؤه وصية تكشف سراً عمره ثلاثون عاماً…"
+              value={draft.logline}
+              error={showErrors && !draft.logline.trim() ? 'اللوجلاين مطلوب' : undefined}
+              onChange={(e) => patch({ logline: e.target.value })}
+            />
+            <p dir="ltr" className={styles.counter}>
+              {draft.logline.length} / {LOGLINE_MAX}
+            </p>
+          </FormSection>
+
+          <FormSection number={5} title="المرفقات (PDF)" aside={<span className={styles.uploadedCount}>{uploaded} من {REQUIRED_FILES.length}</span>}>
+            <div className={styles.workNo}>
+              <TextField
+                label="رقم المصنف لدى المكتبة الوطنية"
+                hint="رقم إيداع المصنف الذي يثبت حق ملكيتك الفكرية للنص"
+                ltr
+                placeholder="مثال: 2026/1234"
+                value={draft.workNo}
+                onChange={(e) => patch({ workNo: e.target.value })}
+              />
+            </div>
+            {REQUIRED_FILES.map((file) => (
+              <FileRow
+                key={file.id}
+                label={file.label}
+                fileName={draft.files[file.id]}
+                highlightMissing={showErrors}
+                error={fileErrors[file.id]}
+                onFile={(f) => {
+                  setFile(file.id, f.name);
+                  setFileErrors((e) => ({ ...e, [file.id]: undefined }));
+                }}
+                onError={(message) => setFileErrors((e) => ({ ...e, [file.id]: message }))}
+              />
+            ))}
+          </FormSection>
+
+          {showErrors && missing.length > 0 && (
+            <div role="alert" className={styles.alert}>
+              <p className={styles.alertTitle}>
+                <Icon name="alert" size={20} strokeWidth={2} />
+                بقيت خطوات قبل الإكمال
+              </p>
+              <ul>
+                {missing.map((m) => (
+                  <li key={m}>{m}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <Button type="submit" size="xl" elevated block>
+            إكمال والانتقال إلى الدفع
+            <Icon name="chevronLeft" size={20} strokeWidth={2.2} />
+          </Button>
+          <p className={styles.legal}>بالضغط على إكمال، تقرّ بأن النص من تأليفك وأن البيانات المدخلة صحيحة</p>
+        </form>
+      </PageBody>
+    </>
+  );
+}

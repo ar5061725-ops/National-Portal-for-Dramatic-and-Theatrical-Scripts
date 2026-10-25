@@ -1,0 +1,149 @@
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-radius: 14px;
+  color: inherit;
+}
+
+.top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.topText {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.title {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.fact {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+}
+
+.fact svg {
+  color: var(--primary);
+}
+
+.fact b {
+  color: var(--primary);
+}
+
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ratingText {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.logline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--primary-soft);
+}
+
+.loglineLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.logline p {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
+.divider {
+  height: 1px;
+  margin: 0;
+  border: none;
+  background: var(--divider);
+}
+
+.contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--primary);
+}
+
+.contactRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.contactLabel {
+  color: var(--muted);
+}
+
+.strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.link {
+  font-weight: 600;
+  color: var(--primary);
+  /* منطقة لمس مريحة دون تغيير التخطيط */
+  padding-block: 8px;
+  margin-block: -8px;
+  overflow-wrap: anywhere;
+}
+
+.attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.attachmentsTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.attachmentsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
