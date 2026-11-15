@@ -2,46 +2,50 @@
 
 import { useMemo, useState } from 'react';
 import { ROUTES } from '@/config/routes';
-import { DECISIONS, REVIEW_CRITERIA } from '@/config/requests';
-import { declareConflict, submitDecision } from '@/lib/api/committee';
+import { DECISIONS, REVIEW_CRITERIA, REVIEW_POLICY } from '@/config/requests';
+import { acknowledgeNoConflict, declareConflict, submitReview } from '@/lib/api/committee';
 import { cn } from '@/lib/cn';
+import { scoreBandLabel, suggestedDecision, weightedTotal } from '@/lib/review';
 import { scoreText } from '@/lib/text';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
-import type { CommitteeOverview, DecisionId, ReviewNoteInput } from '@/types';
+import type { CommitteeOverview, CriterionScoreInput, DecisionId, ReviewNoteInput } from '@/types';
 import { PageBody } from '@/components/layout/PageBody';
 import { BackButton, PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { StarRating } from '@/components/ui/StarRating';
 import { StatePanel } from '@/components/ui/StatePanel';
 import { TextArea, TextField } from '@/components/ui/TextField';
 import styles from './CommitteeReview.module.css';
 
-const SCORE_OPTIONS = Array.from({ length: 10 }, (_, i) => i + 1);
-const DEFAULT_CRITERION_SCORE = 7;
+const SCORE_OPTIONS = Array.from({ length: 11 }, (_, i) => i);
+const EMPTY_NOTE: ReviewNoteInput = { locator: '', body: '' };
+
+function initialScores(): Record<string, CriterionScoreInput> {
+  return Object.fromEntries(REVIEW_CRITERIA.map((c) => [c.id, { score: 5, rationale: '', locator: '' }]));
+}
 
 export function CommitteeReview({ overview }: { overview: CommitteeOverview }) {
   const [currentId, setCurrentId] = useState(overview.queue[0]?.id ?? '');
-  const [criteria, setCriteria] = useState<Record<string, number>>(() =>
-    Object.fromEntries(REVIEW_CRITERIA.map((c) => [c.id, DEFAULT_CRITERION_SCORE])),
-  );
-  const [decision, setDecision] = useState<DecisionId>('approve');
-  const [reason, setReason] = useState('');
-  const [notes, setNotes] = useState<ReviewNoteInput[]>([]);
-  const [draftNote, setDraftNote] = useState<ReviewNoteInput>({ locator: '', body: '' });
+  const [acknowledged, setAcknowledged] = useState<Set<string>>(() => new Set());
   const [conflict, setConflict] = useState(false);
+  const [scores, setScores] = useState(initialScores);
+  const [recommendation, setRecommendation] = useState<DecisionId | null>(null);
+  const [notes, setNotes] = useState<ReviewNoteInput[]>([]);
+  const [draftNote, setDraftNote] = useState<ReviewNoteInput>(EMPTY_NOTE);
+  const [showErrors, setShowErrors] = useState(false);
 
-  const save = useAsyncAction(submitDecision);
+  const ack = useAsyncAction(acknowledgeNoConflict);
   const conflictAction = useAsyncAction(declareConflict);
+  const save = useAsyncAction(submitReview);
 
   const current = overview.queue.find((q) => q.id === currentId);
-  const decisionLabel = DECISIONS.find((d) => d.id === decision)?.label ?? '';
-  /** الدرجة النهائية: متوسط درجات المعايير، بخانة عشرية واحدة. */
-  const score = useMemo(() => {
-    const values = Object.values(criteria);
-    return Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10;
-  }, [criteria]);
+  const total = useMemo(() => weightedTotal(scores), [scores]);
+  const suggested = suggestedDecision(total);
+  const chosen = recommendation ?? suggested;
+  const chosenLabel = DECISIONS.find((d) => d.id === chosen)?.label ?? '';
+  const missing = REVIEW_CRITERIA.filter((c) => scores[c.id].rationale.trim().length < 3);
+  const isAcknowledged = acknowledged.has(currentId);
 
   const stats = [
     { value: overview.stats.pending, label: 'بانتظار المراجعة' },
@@ -51,24 +55,33 @@ export function CommitteeReview({ overview }: { overview: CommitteeOverview }) {
 
   function selectItem(id: string) {
     setCurrentId(id);
-    setNotes([]);
-    setDraftNote({ locator: '', body: '' });
-    setReason('');
     setConflict(false);
-    save.reset();
+    setScores(initialScores());
+    setRecommendation(null);
+    setNotes([]);
+    setDraftNote(EMPTY_NOTE);
+    setShowErrors(false);
+    ack.reset();
     conflictAction.reset();
+    save.reset();
+  }
+
+  function patchScore(id: string, patch: Partial<CriterionScoreInput>) {
+    setScores((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
   }
 
   function addNote() {
     if (!draftNote.body.trim()) return;
-    setNotes((n) => [...n, { locator: draftNote.locator.trim() || 'عام', body: draftNote.body.trim() }]);
-    setDraftNote({ locator: '', body: '' });
+    setNotes((n) => [...n, { ...draftNote, locator: draftNote.locator.trim() || 'عام', body: draftNote.body.trim() }]);
+    setDraftNote(EMPTY_NOTE);
   }
 
-  async function handleConflict() {
-    if (!current) return;
-    await conflictAction.run(current.id);
+  async function handleAcknowledge() {
+    const result = await ack.run(currentId);
+    if (result === true) setAcknowledged((s) => new Set(s).add(currentId));
   }
+
+  const noteNeedsAction = draftNote.requiresRevision && !(draftNote.requiredAction?.trim() && draftNote.completionCriterion?.trim());
 
   return (
     <>
@@ -131,8 +144,8 @@ export function CommitteeReview({ overview }: { overview: CommitteeOverview }) {
                 <StatePanel
                   tone="success"
                   icon="check"
-                  title="تم اعتماد القرار"
-                  description={`الطلب ${current.code}: ${decisionLabel} بتقييم ${scoreText(score)}. حُفظ القرار مسبَّباً وأُرسل إشعار للمؤلف.`}
+                  title="أُرسل تقييمك وأُقفل"
+                  description={`الطلب ${current.code}: المجموع ${scoreText(save.data?.total ?? total)} من 100 وتوصيتك «${chosenLabel}». القرار النهائي للمشرف بعد اكتمال التقييمات، ولا يظهر للمؤلف شيء قبل نشر النتيجة.`}
                 >
                   <Button variant="outline" size="md" onClick={() => selectItem(currentId)}>
                     مراجعة نص آخر
@@ -150,70 +163,110 @@ export function CommitteeReview({ overview }: { overview: CommitteeOverview }) {
                     <span className={styles.statLabelDark}>{current.meta}</span>
                   </div>
 
-                  <label className={styles.conflict}>
-                    <input type="checkbox" checked={conflict} onChange={(e) => setConflict(e.target.checked)} />
-                    <span>أعلن وجود تعارض مصالح مع هذا الطلب</span>
-                  </label>
-
-                  {conflict ? (
+                  {!isAcknowledged ? (
                     <div className={styles.form}>
                       <p className={styles.conflictNote}>
-                        عند الإعلان يُسحب تعيينك وتُحال النسخة إلى مراجع آخر، ويُسجَّل الإعلان في سجل التدقيق.
+                        قبل فتح الملفات: أقرّ بأنه لا تربطك بالمؤلف أو بالعمل علاقة مصلحة (قرابة، عمل مشترك، منافسة…). إن وُجد تعارض فأعلنه ليُحال الطلب إلى مراجع آخر.
+                        {conflict ? ' عند الإعلان يُسحب تعيينك ويُسجَّل الإعلان في سجل التدقيق.' : ''}
                       </p>
-                      {conflictAction.isError && (
+                      {(ack.isError || conflictAction.isError) && (
                         <p role="alert" className={styles.error}>
-                          {conflictAction.error}
+                          {ack.error ?? conflictAction.error}
                         </p>
                       )}
-                      <Button size="lg" block variant="danger" loading={conflictAction.isLoading} onClick={() => void handleConflict()}>
-                        تأكيد إعلان التعارض
-                      </Button>
+                      {conflict ? (
+                        <>
+                          <Button size="lg" block variant="danger" loading={conflictAction.isLoading} onClick={() => void conflictAction.run(current.id)}>
+                            تأكيد إعلان التعارض
+                          </Button>
+                          <Button size="md" block variant="outline" onClick={() => setConflict(false)}>
+                            رجوع
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button size="lg" block loading={ack.isLoading} onClick={() => void handleAcknowledge()}>
+                            أقرّ بعدم وجود تعارض مصالح
+                          </Button>
+                          <Button size="md" block variant="outline" onClick={() => setConflict(true)}>
+                            أعلن وجود تعارض
+                          </Button>
+                        </>
+                      )}
                     </div>
                   ) : (
                     <form
                       className={styles.form}
                       onSubmit={(e) => {
                         e.preventDefault();
-                        void save.run({ itemId: current.id, criteria, score, decision, reason, notes });
+                        if (missing.length > 0) {
+                          setShowErrors(true);
+                          return;
+                        }
+                        void save.run({ itemId: current.id, scores, recommendation: chosen, notes });
                       }}
                     >
                       <div className={styles.scoreRow}>
-                        <span className={styles.fieldLabel}>الدرجة من 10 (متوسط المعايير)</span>
-                        <span dir="ltr" className={styles.scoreValue}>
-                          {scoreText(score)}
+                        <span className={styles.fieldLabel}>المجموع من 100 (موزون)</span>
+                        <span dir="ltr" className={styles.scoreValue} aria-live="polite">
+                          {scoreText(total)}
                         </span>
                       </div>
-                      <div className={styles.stars}>
-                        <StarRating value={Math.round(score)} size={24} decorative />
-                      </div>
+                      <p className={styles.conflictNote}>
+                        درجة كل معيار من 0 إلى 10 مضروبة في وزنه. الإجازة من {REVIEW_POLICY.approveMin} فأكثر، وطلب التعديل من {REVIEW_POLICY.reviseMin} إلى أقل من {REVIEW_POLICY.approveMin}، والرفض دون ذلك.
+                      </p>
+
+                      {REVIEW_CRITERIA.map((c) => {
+                        const s = scores[c.id];
+                        const invalid = showErrors && s.rationale.trim().length < 3;
+                        return (
+                          <fieldset key={c.id} className={styles.criteria}>
+                            <legend className={styles.fieldLabel}>
+                              {c.label} <span className={styles.statLabelDark}>· الوزن {c.weight}%</span>
+                            </legend>
+                            <p className={styles.statLabelDark}>{c.hint}</p>
+                            <label className={styles.criterion}>
+                              <span>
+                                الدرجة: <b>{scoreBandLabel(s.score)}</b>
+                              </span>
+                              <select
+                                aria-label={`درجة ${c.label}`}
+                                value={s.score}
+                                onChange={(e) => patchScore(c.id, { score: Number(e.target.value) })}
+                                className={styles.select}
+                              >
+                                {SCORE_OPTIONS.map((n) => (
+                                  <option key={n} value={n}>
+                                    {n}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <TextArea
+                              label="المبرر (مطلوب)"
+                              value={s.rationale}
+                              error={invalid ? 'اكتب مبرراً لهذه الدرجة' : undefined}
+                              onChange={(e) => patchScore(c.id, { rationale: e.target.value })}
+                            />
+                            <TextField
+                              label="موضع الشاهد (صفحة أو مشهد)"
+                              placeholder="مثال: ص 12"
+                              value={s.locator}
+                              onChange={(e) => patchScore(c.id, { locator: e.target.value })}
+                            />
+                          </fieldset>
+                        );
+                      })}
 
                       <fieldset className={styles.criteria}>
-                        <legend className={styles.fieldLabel}>معايير التقييم</legend>
-                        {REVIEW_CRITERIA.map((c) => (
-                          <label key={c.id} className={styles.criterion}>
-                            <span>{c.label}</span>
-                            <select
-                              value={criteria[c.id]}
-                              onChange={(e) => setCriteria((prev) => ({ ...prev, [c.id]: Number(e.target.value) }))}
-                              className={styles.select}
-                            >
-                              {SCORE_OPTIONS.map((n) => (
-                                <option key={n} value={n}>
-                                  {n}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                        ))}
-                      </fieldset>
-
-                      <fieldset className={styles.criteria}>
-                        <legend className={styles.fieldLabel}>ملاحظات مرتبطة بصفحة أو مشهد</legend>
+                        <legend className={styles.fieldLabel}>ملاحظات مقترحة للمؤلف</legend>
+                        <p className={styles.statLabelDark}>لا يراها المؤلف إلا إذا أقرّها المشرف عند نشر النتيجة.</p>
                         {notes.length > 0 && (
                           <ul className={styles.noteList}>
                             {notes.map((n, i) => (
                               <li key={`${n.locator}-${i}`}>
                                 <b>{n.locator}:</b> {n.body}
+                                {n.requiresRevision && <> — مطلوب: {n.requiredAction} (الإنجاز: {n.completionCriterion})</>}
                                 <button type="button" className={styles.remove} onClick={() => setNotes((all) => all.filter((_, idx) => idx !== i))}>
                                   حذف
                                 </button>
@@ -233,37 +286,57 @@ export function CommitteeReview({ overview }: { overview: CommitteeOverview }) {
                           value={draftNote.body}
                           onChange={(e) => setDraftNote((d) => ({ ...d, body: e.target.value }))}
                         />
-                        <Button size="sm" variant="secondary" onClick={addNote} disabled={!draftNote.body.trim()}>
+                        <label className={styles.conflict}>
+                          <input
+                            type="checkbox"
+                            checked={!!draftNote.requiresRevision}
+                            onChange={(e) => setDraftNote((d) => ({ ...d, requiresRevision: e.target.checked, proposedForAuthor: true }))}
+                          />
+                          <span>تستلزم تعديلاً من المؤلف</span>
+                        </label>
+                        {draftNote.requiresRevision && (
+                          <>
+                            <TextField
+                              label="الإجراء المطلوب"
+                              value={draftNote.requiredAction ?? ''}
+                              onChange={(e) => setDraftNote((d) => ({ ...d, requiredAction: e.target.value }))}
+                            />
+                            <TextField
+                              label="معيار الإنجاز"
+                              value={draftNote.completionCriterion ?? ''}
+                              onChange={(e) => setDraftNote((d) => ({ ...d, completionCriterion: e.target.value }))}
+                            />
+                          </>
+                        )}
+                        <Button size="sm" variant="secondary" onClick={addNote} disabled={!draftNote.body.trim() || !!noteNeedsAction}>
                           إضافة الملاحظة
                         </Button>
                       </fieldset>
 
                       <div className={styles.fieldLabel} id="decision-label">
-                        القرار
+                        توصيتك (المقترحة بحسب المجموع: {DECISIONS.find((d) => d.id === suggested)?.label})
                       </div>
                       <div className={styles.decisions} role="group" aria-labelledby="decision-label">
                         {DECISIONS.map((d) => (
                           <button
                             key={d.id}
                             type="button"
-                            aria-pressed={d.id === decision}
+                            aria-pressed={d.id === chosen}
                             data-tone={d.tone}
-                            onClick={() => setDecision(d.id)}
+                            onClick={() => setRecommendation(d.id)}
                             className={cn('pressable', styles.decision)}
                           >
                             {d.label}
                           </button>
                         ))}
                       </div>
+                      <p className={styles.conflictNote}>القرار النهائي بيد المشرف؛ توصيتك تُرسل مع تقييمك ولا تُعدَّل بعد الإرسال.</p>
 
-                      <TextArea
-                        label="سبب القرار (مطلوب)"
-                        hint="القرار النهائي يجب أن يكون مسبَّباً، ويبقى مرتبطاً بالنسخة والملفات."
-                        value={reason}
-                        error={save.isError && !reason.trim() ? 'اكتب سبب القرار' : undefined}
-                        onChange={(e) => setReason(e.target.value)}
-                      />
-
+                      {showErrors && missing.length > 0 && (
+                        <p role="alert" className={styles.error}>
+                          ينقص المبرر في {missing.length} من المعايير.
+                        </p>
+                      )}
                       {save.isError && (
                         <p role="alert" className={styles.error}>
                           {save.error}
@@ -271,7 +344,7 @@ export function CommitteeReview({ overview }: { overview: CommitteeOverview }) {
                       )}
 
                       <Button type="submit" size="lg" block loading={save.isLoading}>
-                        اعتماد القرار
+                        إرسال التقييم وقفله
                       </Button>
                     </form>
                   )}

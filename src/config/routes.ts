@@ -13,6 +13,7 @@ export const ROUTES = {
   certificatePrint: (id: string) => `/certificates/${id}/print`,
   verify: (code: string) => `/verify/${code}`,
   committee: '/committee',
+  committeeDecisions: '/committee/decisions',
   account: '/account',
   notifications: '/notifications',
   receipts: '/receipts',

@@ -9,17 +9,27 @@ declare
   m uuid := gen_random_uuid();
   d jsonb; ver uuid; sub uuid; res1 jsonb; res2 jsonb; code text; n int; k public.file_kind;
   s2 uuid; att jsonb; ref text; ev jsonb; st text;
+  r2 uuid := gen_random_uuid(); r3 uuid := gen_random_uuid();
+  rid uuid; asg1 uuid; asg2 uuid; asg3 uuid; dcn uuid; sc_doc jsonb; sc_low jsonb; sc_mid jsonb; keys text[] :=
+    array['idea_originality','dramatic_structure','characters','dialogue','rhythm_suspense','staging','world_genre','execution_maturity'];
 begin
   insert into auth.users (id, email, raw_user_meta_data, aud, role) values
     (a,  'a@test.local',  '{"full_name":"كاتب أول"}', 'authenticated', 'authenticated'),
     (a2, 'a2@test.local', '{"full_name":"كاتب ثان","role":"reviewer"}', 'authenticated', 'authenticated'),
     (r,  'r@test.local',  '{"full_name":"مراجع"}', 'authenticated', 'authenticated'),
-    (m,  'm@test.local',  '{"full_name":"مشرف"}', 'authenticated', 'authenticated');
+    (m,  'm@test.local',  '{"full_name":"مشرف"}', 'authenticated', 'authenticated'),
+    (r2, 'r2@test.local', '{"full_name":"مراجع ثان"}', 'authenticated', 'authenticated'),
+    (r3, 'r3@test.local', '{"full_name":"مراجع ثالث"}', 'authenticated', 'authenticated');
   select count(*) into n from public.profiles where id in (a, a2, r, m);
   log := log || 'T1 profiles_created=' || n || ' (expect 4)' || E'\n';
   select count(*) into n from public.user_roles where user_id = a2 and role = 'reviewer';
   log := log || 'T2 reviewer_from_metadata=' || n || ' (expect 0)' || E'\n';
-  insert into public.user_roles (user_id, role) values (r, 'reviewer'), (m, 'committee_manager');
+  insert into public.user_roles (user_id, role) values (r, 'reviewer'), (r2, 'reviewer'), (r3, 'reviewer'), (m, 'committee_manager');
+  -- درجات (مثال الوثيقة = 76.5 / منخفضة = 50 / متوسطة = 80)
+  select jsonb_agg(jsonb_build_object('criterion_key', ck, 'score', (array[8,8,7,7,8,8,7,8])[ci], 'rationale', 'مبرر', 'locator', 'ص ' || ci)),
+         jsonb_agg(jsonb_build_object('criterion_key', ck, 'score', 5, 'rationale', 'مبرر')),
+         jsonb_agg(jsonb_build_object('criterion_key', ck, 'score', 8, 'rationale', 'مبرر'))
+  into sc_doc, sc_low, sc_mid from unnest(keys) with ordinality as t(ck, ci);
 
   -- ===== المؤلف =====
   perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
@@ -73,30 +83,102 @@ begin
 
   -- ===== المشرف يعيّن، المراجع يقيّم =====
   perform set_config('request.jwt.claims', json_build_object('sub', m, 'role', 'authenticated')::text, true);
-  perform public.assign_review(ver, r);
+  asg1 := public.assign_review(ver, r);
+  asg2 := public.assign_review(ver, r2);
+  begin
+    perform public.assign_review(ver, r3);
+    log := log || 'T12a third_reviewer_before_arbitration (FAIL)' || E'\n';
+  exception when others then log := log || 'T12a third_reviewer_before_arbitration_rejected OK: ' || sqlerrm || E'\n'; end;
+  select round_id into rid from public.get_manager_rounds() limit 1;
+
   perform set_config('request.jwt.claims', json_build_object('sub', r, 'role', 'authenticated')::text, true);
   select count(*) into n from public.get_review_queue();
   log := log || 'T12 reviewer_queue=' || n || ' (expect 1)' || E'\n';
   select count(*) into n from public.submissions;
   log := log || 'T13 reviewer_reads_submissions=' || n || ' (expect 0: blind)' || E'\n';
-  perform public.save_review(
-    (select assignment_id from public.get_review_queue() limit 1),
-    '{"structure":9,"characters":8,"dialogue":9,"originality":10}'::jsonb, 'approve',
-    '[{"locator":"المشهد 12","body":"تمهيد أوضح مطلوب"}]'::jsonb, true);
-  select score::text into st from public.reviews limit 1;
-  log := log || 'T14 review_score=' || st || ' (expect 9.00)' || E'\n';
+  begin
+    perform public.get_review_form(asg1);
+    log := log || 'T13a form_without_ack (FAIL)' || E'\n';
+  exception when others then log := log || 'T13a form_requires_conflict_ack OK: ' || sqlerrm || E'\n'; end;
+  perform public.acknowledge_no_conflict(asg1);
+  log := log || 'T13b rubric_criteria=' || jsonb_array_length(public.get_review_form(asg1) -> 'rubric' -> 'criteria') || ' (expect 8)' || E'\n';
+  begin
+    perform public.save_review(asg1, '[{"criterion_key":"idea_originality","score":11,"rationale":"x"}]'::jsonb, 'revise', '[]'::jsonb);
+    log := log || 'T13c score_11_accepted (FAIL)' || E'\n';
+  exception when others then log := log || 'T13c score_11_rejected OK' || E'\n'; end;
+  perform public.save_review(asg1, sc_doc, 'revise',
+    '[{"locator":"المشهد 12","body":"تمهيد أوضح مطلوب","proposed_for_author":true,"requires_revision":true,"required_action":"إعادة كتابة التمهيد","completion_criterion":"ظهور الدافع قبل المشهد 5"}]'::jsonb);
+  begin
+    perform public.save_review(asg1, '[{"criterion_key":"unknown","score":5,"rationale":"x"}]'::jsonb, 'revise', null);
+    log := log || 'T13d foreign_criterion_accepted (FAIL)' || E'\n';
+  exception when others then log := log || 'T13d foreign_criterion_rejected OK' || E'\n'; end;
+  res1 := public.submit_review(asg1);
+  log := log || 'T14 doc_example_score=' || (res1 ->> 'score') || ' round=' || (res1 ->> 'round_status') || ' (expect 76.500 / collecting)' || E'\n';
+  begin
+    perform public.save_review(asg1, sc_mid, 'approve', null);
+    log := log || 'T14a edit_after_submit (FAIL)' || E'\n';
+  exception when others then log := log || 'T14a edit_after_submit_rejected OK: ' || sqlerrm || E'\n'; end;
 
+  -- المراجع الثاني: مسودة ناقصة لا تُرسل، ولا يرى زميله مسوداته
+  perform set_config('request.jwt.claims', json_build_object('sub', r2, 'role', 'authenticated')::text, true);
+  perform public.acknowledge_no_conflict(asg2);
+  perform public.save_review(asg2, '[{"criterion_key":"idea_originality","score":5,"rationale":"مبرر"}]'::jsonb, 'reject', null);
+  begin
+    perform public.submit_review(asg2);
+    log := log || 'T14b incomplete_submit (FAIL)' || E'\n';
+  exception when others then log := log || 'T14b incomplete_submit_rejected OK: ' || sqlerrm || E'\n'; end;
+  select count(*) into n from public.reviews;
+  log := log || 'T14c reviewer2_sees_reviews=' || n || ' (expect 1: own only)' || E'\n';
+  perform public.save_review(asg2, sc_low, 'reject', '[]'::jsonb);
+  res2 := public.submit_review(asg2);
+  log := log || 'T14d low_review score=' || (res2 ->> 'score') || ' round=' || (res2 ->> 'round_status') || ' (expect 50.000 / arbitration: gap 26.5 >= 15)' || E'\n';
+
+  -- القرار ممنوع قبل اكتمال التحكيم
   perform set_config('request.jwt.claims', json_build_object('sub', m, 'role', 'authenticated')::text, true);
   begin
-    perform public.record_decision(ver, 'approved', '');
-    log := log || 'T15 decision_without_reason (FAIL)' || E'\n';
-  exception when others then log := log || 'T15 decision_without_reason_rejected OK' || E'\n'; end;
-  res1 := public.record_decision(ver, 'approved', 'نص مستوفٍ للمعايير');
-  code := res1 ->> 'verification_code';
+    perform public.record_decision(rid, 'approved', 'سبب للمؤلف');
+    log := log || 'T15 decision_during_arbitration (FAIL)' || E'\n';
+  exception when others then log := log || 'T15 decision_during_arbitration_rejected OK: ' || sqlerrm || E'\n'; end;
+  asg3 := public.assign_review(ver, r3);
+  perform set_config('request.jwt.claims', json_build_object('sub', r3, 'role', 'authenticated')::text, true);
+  perform public.acknowledge_no_conflict(asg3);
+  perform public.save_review(asg3, sc_mid, 'revise', '[]'::jsonb);
+  res1 := public.submit_review(asg3);
+  log := log || 'T15a third_review score=' || (res1 ->> 'score') || ' round=' || (res1 ->> 'round_status') || ' (expect 80.000 / awaiting_decision)' || E'\n';
+
+  perform set_config('request.jwt.claims', json_build_object('sub', m, 'role', 'authenticated')::text, true);
+  d := public.get_round_summary(rid);
+  log := log || 'T15b median=' || (d ->> 'aggregate_score') || ' recommended=' || (d ->> 'recommended_outcome') || ' (expect 76.500 / revision_requested)' || E'\n';
   begin
-    perform public.record_decision(ver, 'rejected', 'محاولة ثانية');
+    perform public.record_decision(rid, 'approved', 'سبب للمؤلف');
+    log := log || 'T15c differs_without_internal_reason (FAIL)' || E'\n';
+  exception when others then log := log || 'T15c differs_without_internal_reason_rejected OK' || E'\n'; end;
+  dcn := public.record_decision(rid, 'approved', 'اعتماد بعد مراجعة المشرف', 'تقدير استثنائي موثق للمشرف');
+  begin
+    perform public.record_decision(rid, 'rejected', 'محاولة ثانية', 'سبب داخلي');
     log := log || 'T16 second_decision (FAIL)' || E'\n';
   exception when others then log := log || 'T16 second_decision_rejected OK' || E'\n'; end;
+  select status::text into st from public.submissions where id = sub;
+  log := log || 'T16a status_before_publish=' || st || ' (expect in_review)' || E'\n';
+  res1 := public.publish_review_result(dcn, 'idem-pub-0001');
+  res2 := public.publish_review_result(dcn, 'idem-pub-0001');
+  log := log || 'T16b publish idempotent=' || (res1 = res2) || ' status=' || (res1 ->> 'submission_status') || E'\n';
+  begin
+    perform public.publish_review_result(dcn, 'idem-pub-0002');
+    log := log || 'T16c republish (FAIL)' || E'\n';
+  exception when others then log := log || 'T16c republish_rejected OK: ' || sqlerrm || E'\n'; end;
+  perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+  d := public.get_published_result(sub);
+  log := log || 'T16d author_snapshot outcome=' || (d ->> 'outcome') || ' score=' || (d ->> 'aggregate_score') || ' notes=' || jsonb_array_length(d -> 'notes')
+             || ' internal_leak=' || (d ? 'internal_reason') || ' (expect approved / 76.5 / 1 / false)' || E'\n';
+  perform set_config('request.jwt.claims', json_build_object('sub', a2, 'role', 'authenticated')::text, true);
+  begin
+    perform public.get_published_result(sub);
+    log := log || 'T16e foreign_author_reads_result (FAIL)' || E'\n';
+  exception when others then log := log || 'T16e foreign_author_denied OK' || E'\n'; end;
+  reset role;
+  select verification_code into code from public.certificates where decision_id = dcn;
+  log := log || 'T16f certificate_issued=' || (code is not null) || E'\n';
 
   -- ===== زائر =====
   reset role;

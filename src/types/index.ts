@@ -118,15 +118,53 @@ export interface ReviewNoteInput {
   /** الموقع: صفحة أو مشهد */
   locator: string;
   body: string;
+  /** مقترحة للمؤلف: لا تظهر له إلا بعد اعتماد المشرف ونشر النتيجة */
+  proposedForAuthor?: boolean;
+  requiresRevision?: boolean;
+  requiredAction?: string;
+  completionCriterion?: string;
 }
 
-export interface CommitteeDecisionInput {
-  itemId: string;
-  criteria: Record<string, number>;
+export interface CriterionScoreInput {
   score: number;
-  decision: DecisionId;
-  reason: string;
+  rationale: string;
+  locator: string;
+}
+
+/** تقييم مراجع: درجة وتبرير لكل معيار + توصية (القرار النهائي للمشرف). */
+export interface ReviewSubmitInput {
+  itemId: string;
+  scores: Record<string, CriterionScoreInput>;
+  recommendation: DecisionId;
   notes: ReviewNoteInput[];
+}
+
+export interface ReviewSubmitResult {
+  total: number;
+}
+
+export interface RoundReviewSummary {
+  label: string;
+  score: number | null;
+  recommendation: DecisionId | null;
+  isArbitration: boolean;
+}
+
+/** ملخص جولة التقييم للمشرف: يُظهر الدرجات المرسلة دون هوية المراجعين. */
+export interface RoundSummary {
+  roundId: string;
+  code: string;
+  status: 'collecting' | 'arbitration' | 'awaiting_decision' | 'decided' | 'published';
+  aggregateScore: number | null;
+  recommended: DecisionId | null;
+  reviews: RoundReviewSummary[];
+}
+
+export interface RoundDecisionInput {
+  roundId: string;
+  outcome: DecisionId;
+  authorReason: string;
+  internalReason: string;
 }
 
 export interface Certificate {
