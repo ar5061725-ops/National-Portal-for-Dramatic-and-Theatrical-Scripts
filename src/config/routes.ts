@@ -14,6 +14,7 @@ export const ROUTES = {
   verify: (code: string) => `/verify/${code}`,
   committee: '/committee',
   committeeDecisions: '/committee/decisions',
+  committeeLogin: '/committee/login',
   account: '/account',
   notifications: '/notifications',
   receipts: '/receipts',

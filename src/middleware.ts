@@ -13,7 +13,8 @@ function isProtected(pathname: string): boolean {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  if (!isProtected(pathname)) return NextResponse.next();
+  if (!isProtected(pathname) || pathname === '/committee/login') return NextResponse.next();
+  const loginPath = pathname === '/committee' || pathname.startsWith('/committee/') ? '/committee/login' : '/login';
 
   let response = NextResponse.next({ request });
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
@@ -31,7 +32,7 @@ export async function middleware(request: NextRequest) {
   const { data } = await supabase.auth.getUser();
   if (!data.user) {
     const url = request.nextUrl.clone();
-    url.pathname = '/login';
+    url.pathname = loginPath;
     url.search = `?next=${encodeURIComponent(pathname + request.nextUrl.search)}`;
     return NextResponse.redirect(url);
   }

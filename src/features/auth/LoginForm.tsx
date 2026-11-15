@@ -30,7 +30,8 @@ const COPY: Record<Mode, { heading: string; subheading: string }> = {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function LoginForm() {
+export function LoginForm({ variant = 'author' }: { variant?: 'author' | 'committee' }) {
+  const isCommittee = variant === 'committee';
   const router = useRouter();
   const { showToast } = useToast();
   const [mode, setMode] = useState<Mode>('login');
@@ -91,9 +92,9 @@ export function LoginForm() {
     if (!succeeded) return;
     // وجهة العودة بعد الدخول (من ?next=) مع قبول المسارات الداخلية فقط لمنع التحويل لمواقع خارجية
     const next = new URLSearchParams(window.location.search).get('next');
-    router.replace(next && next.startsWith('/') && !next.startsWith('//') ? next : ROUTES.newSubmission);
+    router.replace(next && next.startsWith('/') && !next.startsWith('//') ? next : isCommittee ? ROUTES.committee : ROUTES.newSubmission);
     router.refresh();
-  }, [succeeded, router]);
+  }, [succeeded, router, isCommittee]);
 
   // بعد إنشاء الحساب: يجب تأكيد البريد (رابط يُستخدم مرة واحدة) قبل الدخول
   if (registered) {
@@ -125,20 +126,22 @@ export function LoginForm() {
       </>
     );
   }
-  const copy = COPY[mode];
+  const copy = isCommittee
+    ? { heading: 'دخول أعضاء لجنة المراجعة', subheading: 'للمراجعين ومشرفي اللجنة فقط، وتُنشأ الحسابات من إدارة اللجنة' }
+    : COPY[mode];
 
   return (
     <>
       <PageHeader
         rounded
-        start={<BackButton href={ROUTES.home} />}
+        start={<BackButton href={isCommittee ? ROUTES.login : ROUTES.home} />}
         end={<Logo size={52} />}
         title={copy.heading}
         subtitle={copy.subheading}
       />
 
       <PageBody gap={18}>
-        <SegmentedControl
+        {!isCommittee && <SegmentedControl
           tone="onLight"
           label="نوع الدخول"
           value={mode}
@@ -150,7 +153,7 @@ export function LoginForm() {
             { id: 'login', label: 'لدي حساب' },
             { id: 'register', label: 'تسجيل لأول مرة' },
           ]}
-        />
+        />}
 
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
           {mode === 'login' ? (
@@ -196,7 +199,7 @@ export function LoginForm() {
           </Button>
         </form>
 
-        {mode === 'login' && (
+        {mode === 'login' && !isCommittee && (
           <>
             <div className={styles.or} aria-hidden="true">
               <span />
@@ -215,9 +218,11 @@ export function LoginForm() {
           </>
         )}
 
-        <Link href={ROUTES.committee} className={styles.committee}>
-          دخول أعضاء لجنة المراجعة
-        </Link>
+        {!isCommittee && (
+          <Link href={ROUTES.committeeLogin} className={styles.committee}>
+            دخول أعضاء لجنة المراجعة
+          </Link>
+        )}
       </PageBody>
     </>
   );
