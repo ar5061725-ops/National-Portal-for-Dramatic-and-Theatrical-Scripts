@@ -6,7 +6,8 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { MESSAGES } from '@/config/site';
 import { ROUTES } from '@/config/routes';
-import { login, loginWithDigitalId, register } from '@/lib/api/auth';
+import { login, loginWithDigitalId, register, requestPasswordReset, resendConfirmation } from '@/lib/api/auth';
+import { getErrorMessage } from '@/lib/api/client';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useToast } from '@/providers/ToastProvider';
 import { PageBody } from '@/components/layout/PageBody';
@@ -52,7 +53,7 @@ export function LoginForm() {
   function validate(): Errors {
     const next: Errors = {};
     if (mode === 'login') {
-      if (!values.identifier.trim()) next.identifier = 'أدخل البريد الإلكتروني أو رقم الهاتف';
+      if (!EMAIL_PATTERN.test(values.identifier.trim())) next.identifier = 'أدخل البريد الإلكتروني المسجَّل به';
       if (!values.password) next.password = 'أدخل كلمة المرور';
     } else {
       if (!values.name.trim()) next.name = 'أدخل الاسم الكامل';
@@ -76,6 +77,15 @@ export function LoginForm() {
     }
   }
 
+  async function runWithToast(action: () => Promise<void>, successMessage: string) {
+    try {
+      await action();
+      showToast(successMessage);
+    } catch (error) {
+      showToast(getErrorMessage(error));
+    }
+  }
+
   // التوجيه بعد النجاح يعتمد على الحالة (الدوال لا تعيد قيمة)
   useEffect(() => {
     if (succeeded) router.push(ROUTES.newSubmission);
@@ -93,7 +103,7 @@ export function LoginForm() {
             title="أرسلنا إليك رابط التأكيد"
             description={`افتح الرابط المرسل إلى ${values.email} من هاتفك أو حاسوبك، ثم ارجع وسجّل الدخول. الرابط يُستخدم مرة واحدة.`}
           >
-            <Button variant="outline" size="md" block onClick={() => showToast(MESSAGES.confirmationResent)}>
+            <Button variant="outline" size="md" block onClick={() => void runWithToast(() => resendConfirmation(values.email), MESSAGES.confirmationResent)}>
               إعادة إرسال الرابط
             </Button>
             <Button
@@ -142,7 +152,7 @@ export function LoginForm() {
           {mode === 'login' ? (
             <>
               <TextField
-                label="البريد الإلكتروني أو رقم الهاتف"
+                label="البريد الإلكتروني"
                 placeholder="name@example.com"
                 autoComplete="username"
                 value={values.identifier}
@@ -158,7 +168,7 @@ export function LoginForm() {
                 error={errors.password}
                 onChange={(e) => set('password')(e.target.value)}
               />
-              <button type="button" className={styles.textLink} onClick={() => showToast(MESSAGES.forgotPassword)}>
+              <button type="button" className={styles.textLink} onClick={() => void runWithToast(() => requestPasswordReset(values.identifier), MESSAGES.forgotPassword)}>
                 نسيت كلمة المرور؟
               </button>
             </>
