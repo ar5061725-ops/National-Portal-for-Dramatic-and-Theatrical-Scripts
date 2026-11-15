@@ -56,7 +56,8 @@ type ButtonLinkProps = StyleProps &
 /** رابط بمظهر الزر. يستخدم next/link للروابط الداخلية و<a> لـ tel: و mailto:. */
 export function ButtonLink({ variant, size, block, elevated, className, children, href, ...rest }: ButtonLinkProps) {
   const classes = buttonClass({ variant, size, block, elevated, className });
-  if (/^(tel|mailto):/.test(href)) {
+  // روابط خارج نظام التوجيه (اتصال، بريد، ملفات PDF) تُعرض كـ <a> عادية بدون تحميل مسبق
+  if (/^(tel|mailto):|\.pdf$/.test(href)) {
     return (
       <a href={href} className={classes} {...rest}>
         {children}

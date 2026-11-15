@@ -13,6 +13,7 @@ import { PageBody } from '@/components/layout/PageBody';
 import { BackButton, PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
+import { StatePanel } from '@/components/ui/StatePanel';
 import { Logo } from '@/components/ui/Logo';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { TextField } from '@/components/ui/TextField';
@@ -39,7 +40,8 @@ export function LoginForm() {
   const registerAction = useAsyncAction(register);
   const digitalIdAction = useAsyncAction(loginWithDigitalId);
   const active = mode === 'login' ? loginAction : registerAction;
-  const succeeded = loginAction.isSuccess || registerAction.isSuccess || digitalIdAction.isSuccess;
+  const registered = registerAction.isSuccess;
+  const succeeded = loginAction.isSuccess || digitalIdAction.isSuccess;
   const busy = loginAction.isLoading || registerAction.isLoading || digitalIdAction.isLoading || succeeded;
 
   const set = (key: keyof typeof values) => (value: string) => {
@@ -76,9 +78,39 @@ export function LoginForm() {
 
   // التوجيه بعد النجاح يعتمد على الحالة (الدوال لا تعيد قيمة)
   useEffect(() => {
-    if (succeeded) router.push(ROUTES.submit);
+    if (succeeded) router.push(ROUTES.newSubmission);
   }, [succeeded, router]);
 
+  // بعد إنشاء الحساب: يجب تأكيد البريد (رابط يُستخدم مرة واحدة) قبل الدخول
+  if (registered) {
+    return (
+      <>
+        <PageHeader rounded start={<BackButton href={ROUTES.home} />} end={<Logo size={52} />} title="تأكيد البريد الإلكتروني" subtitle="خطوة أخيرة لتفعيل حسابك" />
+        <PageBody gap={18}>
+          <StatePanel
+            tone="success"
+            icon="mail"
+            title="أرسلنا إليك رابط التأكيد"
+            description={`افتح الرابط المرسل إلى ${values.email} من هاتفك أو حاسوبك، ثم ارجع وسجّل الدخول. الرابط يُستخدم مرة واحدة.`}
+          >
+            <Button variant="outline" size="md" block onClick={() => showToast(MESSAGES.confirmationResent)}>
+              إعادة إرسال الرابط
+            </Button>
+            <Button
+              size="lg"
+              block
+              onClick={() => {
+                registerAction.reset();
+                setMode('login');
+              }}
+            >
+              لدي حساب مؤكَّد، تسجيل الدخول
+            </Button>
+          </StatePanel>
+        </PageBody>
+      </>
+    );
+  }
   const copy = COPY[mode];
 
   return (

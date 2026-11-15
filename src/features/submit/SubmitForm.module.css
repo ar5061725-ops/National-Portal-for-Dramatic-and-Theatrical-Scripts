@@ -115,6 +115,12 @@
   color: var(--danger-ink);
 }
 
+.saved {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .legal {
   text-align: center;
   font-size: 12px;

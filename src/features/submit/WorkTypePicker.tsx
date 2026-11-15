@@ -1,4 +1,4 @@
-import { WORK_TYPES } from '@/config/submission';
+import { ENABLED_WORK_TYPES } from '@/config/submission';
 import { cn } from '@/lib/cn';
 import type { WorkType } from '@/types';
 import { Icon } from '@/components/ui/Icon';
@@ -11,8 +11,8 @@ interface WorkTypePickerProps {
 
 export function WorkTypePicker({ value, onChange }: WorkTypePickerProps) {
   return (
-    <div role="group" aria-label="نوع العمل" className={styles.grid}>
-      {WORK_TYPES.map((type) => (
+    <div role="group" aria-label="نوع العمل" className={styles.grid} style={{ gridTemplateColumns: `repeat(${ENABLED_WORK_TYPES.length}, minmax(0, 1fr))` }}>
+      {ENABLED_WORK_TYPES.map((type) => (
         <button
           key={type.id}
           type="button"

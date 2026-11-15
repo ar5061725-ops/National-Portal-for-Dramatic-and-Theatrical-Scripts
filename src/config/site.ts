@@ -19,6 +19,9 @@ export const PLACEHOLDERS = {
   workNo: '[رقم المصنف]',
 } as const;
 
+/** عنوان الموقع المنشور (يُستخدم في روابط التحقق ورموز QR). */
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://national-scripts-portal.vercel.app').replace(/\/$/, '');
+
 export const CURRENCY = 'د.ك';
 
 export const MESSAGES = {
@@ -28,6 +31,8 @@ export const MESSAGES = {
   receiptDownloaded: 'تم تحميل الإيصال',
   shareLinkCopied: 'تم نسخ رابط المشاركة',
   editProfileOpened: 'تم فتح تعديل البيانات',
+  draftSaved: 'تم حفظ المسودة',
+  confirmationResent: 'أعدنا إرسال رابط التأكيد إلى بريدك',
   genericError: 'حدث خطأ غير متوقع، حاول مرة أخرى',
 } as const;
 

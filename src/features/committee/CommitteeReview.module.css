@@ -187,6 +187,91 @@
   color: var(--danger);
 }
 
+.conflict {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.conflict input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--primary);
+}
+
+.conflictNote {
+  font-size: 13.5px;
+  line-height: 1.8;
+  color: var(--muted);
+}
+
+.criteria {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.criteria legend {
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+.criterion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.select {
+  min-width: 84px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 16px;
+}
+
+.noteList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+
+.noteList li {
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--primary-soft);
+}
+
+.remove {
+  margin-inline-start: 10px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--danger);
+}
+
 .error {
   font-size: 14px;
   font-weight: 600;

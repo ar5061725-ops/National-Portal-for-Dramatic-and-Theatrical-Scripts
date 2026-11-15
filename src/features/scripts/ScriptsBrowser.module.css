@@ -3,6 +3,12 @@
   font-weight: 600;
 }
 
+.genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .search {
   display: flex;
   align-items: center;

@@ -11,6 +11,13 @@ import { StatePanel } from '@/components/ui/StatePanel';
 import { DownloadReceiptButton } from './DownloadReceiptButton';
 import styles from './ReceiptsScreen.module.css';
 
+/** حالة الإيصال: تُكتب بجانب لونها، والاسترداد مرتبط بالدفعة الأصلية. */
+const RECEIPT_STATUS: Record<Receipt['status'], { label: string; tone: 'success' | 'warning' | 'neutral' }> = {
+  paid: { label: 'مدفوع', tone: 'success' },
+  partially_refunded: { label: 'مسترد جزئياً', tone: 'warning' },
+  refunded: { label: 'مسترد', tone: 'neutral' },
+};
+
 interface ReceiptsScreenProps {
   receipts: Receipt[];
   totalLabel: string;
@@ -19,7 +26,7 @@ interface ReceiptsScreenProps {
 export function ReceiptsScreen({ receipts, totalLabel }: ReceiptsScreenProps) {
   return (
     <>
-      <PageHeader start={<BackButton href={ROUTES.profile} />} end={<Logo size={44} />} title="الإيصالات والمدفوعات" titleSize={24}>
+      <PageHeader start={<BackButton href={ROUTES.account} />} end={<Logo size={44} />} title="الإيصالات والمدفوعات" titleSize={24}>
         <div className={styles.total}>
           <span className={styles.totalLabel}>إجمالي المدفوع · {receipts.length} عمليات</span>
           <span className={styles.totalValue}>
@@ -46,7 +53,7 @@ export function ReceiptsScreen({ receipts, totalLabel }: ReceiptsScreenProps) {
               </span>
             </div>
             <div className={styles.footer}>
-              <Badge tone="success">مدفوع</Badge>
+              <Badge tone={RECEIPT_STATUS[r.status].tone}>{RECEIPT_STATUS[r.status].label}</Badge>
               <DownloadReceiptButton />
             </div>
           </Card>

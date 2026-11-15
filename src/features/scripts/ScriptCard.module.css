@@ -88,62 +88,19 @@
   color: var(--ink-soft);
 }
 
-.divider {
-  height: 1px;
-  margin: 0;
-  border: none;
-  background: var(--divider);
-}
-
-.contacts {
+.author {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 10px;
   font-size: 14px;
   color: var(--primary);
 }
 
-.contactRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.contactLabel {
+.authorLabel {
   color: var(--muted);
 }
 
-.strong {
+.authorName {
   font-weight: 600;
   color: var(--ink);
-}
-
-.link {
-  font-weight: 600;
-  color: var(--primary);
-  /* منطقة لمس مريحة دون تغيير التخطيط */
-  padding-block: 8px;
-  margin-block: -8px;
-  overflow-wrap: anywhere;
-}
-
-.attachments {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.attachmentsTitle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--primary);
-}
-
-.attachmentsGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
 }

@@ -15,7 +15,7 @@ export function NotificationsScreen({ notifications }: { notifications: AppNotif
   return (
     <>
       <PageHeader
-        start={<BackButton href={ROUTES.profile} />}
+        start={<BackButton href={ROUTES.account} />}
         end={unreadCount > 0 ? <Badge tone="white">{unreadCount} جديد</Badge> : undefined}
         title="الإشعارات"
       />
@@ -28,7 +28,15 @@ export function NotificationsScreen({ notifications }: { notifications: AppNotif
             <span className={styles.text}>
               <span className={styles.title}>{n.title}</span>
               <span className={styles.body}>{n.body}</span>
-              <span className={styles.time}>{n.time}</span>
+              {n.requestNo && (
+                <span className={styles.requestNo}>
+                  رقم الطلب <span dir="ltr">{n.requestNo}</span>
+                </span>
+              )}
+              <span className={styles.time}>
+                {n.time}
+                {n.readAt ? ` · ${n.readAt}` : ''}
+              </span>
             </span>
             {n.unread && <span className={styles.dot} role="img" aria-label="غير مقروء" />}
           </Link>

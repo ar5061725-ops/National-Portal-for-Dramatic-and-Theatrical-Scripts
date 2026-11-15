@@ -1,0 +1,48 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.heading {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.answer {
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.select {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: 16px;
+}
+
+.error {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--danger);
+}

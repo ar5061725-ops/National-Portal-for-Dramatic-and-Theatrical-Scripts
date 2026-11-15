@@ -1,6 +1,9 @@
 export type ScriptCategory = 'drama' | 'theatre';
 export type WorkType = 'play' | 'series' | 'film';
-export type RequestStatus = 'review' | 'revision' | 'approved';
+
+/** مسودة ← بانتظار الدفع ← مستلم ← قيد المراجعة ← مطلوب تعديل أو مجاز أو مرفوض */
+export type RequestStatus = 'draft' | 'awaiting_payment' | 'received' | 'review' | 'revision' | 'approved' | 'rejected';
+
 export type DecisionId = 'approve' | 'revise' | 'reject';
 export type PaymentMethodId = 'knet' | 'card' | 'apple';
 export type RequiredFileId = 'exec' | 'treatment' | 'author' | 'script';
@@ -17,12 +20,7 @@ export interface LabelledValue {
   value: string;
 }
 
-export interface ScriptFile {
-  id: string;
-  label: string;
-  size: string;
-}
-
+/** بطاقة نص مجاز في الدليل: بيانات مختصرة، وبيانات التواصل لا تُعرض إلا بعد موافقة المؤلف. */
 export interface Script {
   id: string;
   category: ScriptCategory;
@@ -34,7 +32,6 @@ export interface Script {
   logline: string;
   /** أول عنصر هو "الطول" الذي يظهر في البطاقة (عدد الحلقات / الفصول). */
   stats: LabelledValue[];
-  files: ScriptFile[];
   licenseNo: string;
   licenseDate: string;
 }
@@ -48,6 +45,8 @@ export interface ScriptRequest {
   step: number;
   no: string;
   scriptId?: string;
+  /** سبب القرار عند الرفض أو طلب التعديل (القرار مسبَّب). */
+  reason?: string;
 }
 
 export interface CommitteeNote {
@@ -57,8 +56,15 @@ export interface CommitteeNote {
 }
 
 export interface FeedbackThread {
-  request: Pick<ScriptRequest, 'id' | 'title'> & { kind: string };
+  request: ScriptRequest & { kind: string };
   notes: CommitteeNote[];
+}
+
+export interface PayableRequest {
+  id: string;
+  title: string;
+  workDescription: string;
+  filesCount: number;
 }
 
 export interface AppNotification {
@@ -66,11 +72,17 @@ export interface AppNotification {
   title: string;
   body: string;
   time: string;
+  /** رقم الطلب المرتبط بالإشعار */
+  requestNo?: string;
+  /** وقت قراءة المستخدم للإشعار؛ غائب = غير مقروء */
+  readAt?: string;
   unread: boolean;
   tone: Tone;
   icon: 'check' | 'warning' | 'clock' | 'receipt';
   href: string;
 }
+
+export type ReceiptStatus = 'paid' | 'partially_refunded' | 'refunded';
 
 export interface Receipt {
   id: string;
@@ -78,6 +90,7 @@ export interface Receipt {
   method: string;
   dateLabel: string;
   amountLabel: string;
+  status: ReceiptStatus;
 }
 
 export interface UserAccount extends Contact {
@@ -89,9 +102,10 @@ export interface ProfileData {
   stats: { submitted: number; approved: number; needsRevision: number };
 }
 
+/** عنصر في قائمة المراجعة: نسخة منزوعة الهوية تُعرَّف برمز الطلب فقط. */
 export interface CommitteeQueueItem {
   id: string;
-  title: string;
+  code: string;
   meta: string;
 }
 
@@ -100,11 +114,19 @@ export interface CommitteeOverview {
   queue: CommitteeQueueItem[];
 }
 
+export interface ReviewNoteInput {
+  /** الموقع: صفحة أو مشهد */
+  locator: string;
+  body: string;
+}
+
 export interface CommitteeDecisionInput {
-  scriptId: string;
+  itemId: string;
+  criteria: Record<string, number>;
   score: number;
   decision: DecisionId;
-  notes: string;
+  reason: string;
+  notes: ReviewNoteInput[];
 }
 
 export interface Certificate {
@@ -119,6 +141,32 @@ export interface Certificate {
   licenseDate: string;
   workNo: string;
   score: number;
+  verifyCode: string;
+  status: 'active' | 'revoked';
+}
+
+/** الحقول المصرّح بإظهارها للعموم عند التحقق من شهادة. */
+export interface CertificateVerification {
+  code: string;
+  status: 'active' | 'revoked';
+  title: string;
+  author: string;
+  workTypeLabel: string;
+  licenseNo: string;
+  licenseDate: string;
+}
+
+export interface ContactRequestInput {
+  scriptId: string;
+  purpose: string;
+}
+
+export type SupportTopic = 'payment' | 'account' | 'review' | 'other';
+
+export interface SupportTicketInput {
+  topic: SupportTopic;
+  requestNo: string;
+  message: string;
 }
 
 export interface SubmissionDraft {
@@ -134,4 +182,8 @@ export interface SubmissionDraft {
   logline: string;
   workNo: string;
   files: Partial<Record<RequiredFileId, string>>;
+  /** يُصدر عند الإرسال (قفل النسخة)، وهو معرّف صفحة الدفع. */
+  requestNo?: string;
+  /** وقت آخر حفظ للمسودة (ISO). */
+  savedAt?: string;
 }

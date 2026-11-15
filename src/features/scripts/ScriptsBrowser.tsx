@@ -7,6 +7,7 @@ import type { Script, ScriptCategory } from '@/types';
 import { BackButton, PageHeader } from '@/components/layout/PageHeader';
 import { PageBody } from '@/components/layout/PageBody';
 import { Button } from '@/components/ui/Button';
+import { Chip } from '@/components/ui/Chip';
 import { Icon } from '@/components/ui/Icon';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { StatePanel } from '@/components/ui/StatePanel';
@@ -20,6 +21,7 @@ const TABS: { id: ScriptCategory; label: string }[] = [
 
 export function ScriptsBrowser({ scripts }: { scripts: Script[] }) {
   const [category, setCategory] = useState<ScriptCategory>('drama');
+  const [genre, setGenre] = useState<string | null>(null);
   const [query, setQuery] = useState('');
 
   const tabs = useMemo(
@@ -27,14 +29,28 @@ export function ScriptsBrowser({ scripts }: { scripts: Script[] }) {
     [scripts],
   );
 
+  /** التصنيفات المتاحة داخل القسم الحالي (تصفية بحسب التصنيف). */
+  const genres = useMemo(
+    () => Array.from(new Set(scripts.filter((s) => s.category === category).map((s) => s.genre))),
+    [scripts, category],
+  );
+
   const visible = useMemo(() => {
     const q = normalizeArabic(query);
     return scripts.filter(
-      (s) => s.category === category && (!q || normalizeArabic(s.title).includes(q) || normalizeArabic(s.author.name).includes(q)),
+      (s) =>
+        s.category === category &&
+        (!genre || s.genre === genre) &&
+        (!q || normalizeArabic(s.title).includes(q) || normalizeArabic(s.author.name).includes(q)),
     );
-  }, [scripts, category, query]);
+  }, [scripts, category, genre, query]);
 
   const trimmed = query.trim();
+
+  function changeCategory(next: ScriptCategory) {
+    setCategory(next);
+    setGenre(null);
+  }
 
   return (
     <>
@@ -58,10 +74,23 @@ export function ScriptsBrowser({ scripts }: { scripts: Script[] }) {
             onChange={(e) => setQuery(e.target.value)}
           />
         </label>
-        <SegmentedControl options={tabs} value={category} onChange={setCategory} label="تصنيف النصوص" />
+        <SegmentedControl options={tabs} value={category} onChange={changeCategory} label="تصنيف النصوص" />
       </PageHeader>
 
       <PageBody grid>
+        {genres.length > 1 && (
+          <div data-span="full" className={styles.genres} role="group" aria-label="التصفية بحسب التصنيف">
+            <Chip pressed={genre === null} onClick={() => setGenre(null)}>
+              الكل
+            </Chip>
+            {genres.map((g) => (
+              <Chip key={g} pressed={genre === g} onClick={() => setGenre(g)}>
+                {g}
+              </Chip>
+            ))}
+          </div>
+        )}
+
         {visible.map((script) => (
           <ScriptCard key={script.id} script={script} />
         ))}
@@ -77,9 +106,15 @@ export function ScriptsBrowser({ scripts }: { scripts: Script[] }) {
                   : 'لا توجد نصوص مجازة في هذا القسم بعد.'
               }
             >
-              {trimmed && (
-                <Button size="sm" onClick={() => setQuery('')}>
-                  مسح البحث
+              {(trimmed || genre) && (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setQuery('');
+                    setGenre(null);
+                  }}
+                >
+                  مسح البحث والتصفية
                 </Button>
               )}
             </StatePanel>

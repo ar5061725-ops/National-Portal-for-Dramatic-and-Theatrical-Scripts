@@ -11,9 +11,9 @@ const body = IBM_Plex_Sans_Arabic({
   display: 'swap',
 });
 
+// خط متغيّر (400–700): خادم Google لم يعد يخدم الأوزان المنفصلة لهذا الخط بصيغة يفهمها next/font
 const display = Reem_Kufi({
   subsets: ['arabic', 'latin'],
-  weight: ['500', '700'],
   variable: '--font-display',
   display: 'swap',
 });

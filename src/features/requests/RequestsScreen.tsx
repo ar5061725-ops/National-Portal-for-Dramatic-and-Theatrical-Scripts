@@ -14,7 +14,7 @@ export function RequestsScreen({ requests }: { requests: ScriptRequest[] }) {
       <PageHeader title="طلباتي" subtitle="تابع حالة نصوصك المقدّمة خطوة بخطوة" end={<Logo size={44} />} />
       <PageBody grid>
         <div data-span="full">
-          <ButtonLink href={ROUTES.submit} variant="dashed" size="md" block>
+          <ButtonLink href={ROUTES.newSubmission} variant="dashed" size="md" block>
             <Icon name="plus" size={18} strokeWidth={2.2} />
             تقديم نص جديد
           </ButtonLink>

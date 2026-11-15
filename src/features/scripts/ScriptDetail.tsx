@@ -1,15 +1,12 @@
 import { ROUTES } from '@/config/routes';
-import { mailHref, telHref } from '@/lib/text';
 import type { Script } from '@/types';
 import { PageBody } from '@/components/layout/PageBody';
 import { BackButton, PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
-import { ButtonLink } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Icon } from '@/components/ui/Icon';
 import { ScoreBadge } from '@/components/ui/ScoreBadge';
 import { StarRating } from '@/components/ui/StarRating';
-import { AttachmentButton } from './AttachmentButton';
+import { ContactRequestPanel } from './ContactRequestPanel';
 import styles from './ScriptDetail.module.css';
 
 function Fact({ label, value }: { label: string; value: string }) {
@@ -21,6 +18,7 @@ function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
+/** نبذة مجازة للعرض العام + طلب تواصل. لا تُعرض الملفات ولا بيانات اتصال الكاتب. */
 export function ScriptDetail({ script }: { script: Script }) {
   const facts = [
     ...script.stats,
@@ -32,7 +30,7 @@ export function ScriptDetail({ script }: { script: Script }) {
     <>
       <PageHeader
         rounded
-        start={<BackButton href={ROUTES.scripts} />}
+        start={<BackButton href={ROUTES.approved} />}
         end={<Badge tone="success">نص مجاز</Badge>}
       >
         <div className={styles.heroRow}>
@@ -69,24 +67,9 @@ export function ScriptDetail({ script }: { script: Script }) {
               <span className={styles.authorName}>{script.author.name}</span>
             </div>
           </div>
-          <div className={styles.contactGrid}>
-            <ButtonLink href={telHref(script.author.phone)} size="md">
-              <Icon name="phone" size={18} />
-              اتصال
-            </ButtonLink>
-            <ButtonLink href={mailHref(script.author.email)} size="md" variant="secondary">
-              <Icon name="mail" size={18} />
-              مراسلة
-            </ButtonLink>
-          </div>
         </Card>
 
-        <Card padding={18} radius={20} gap={10}>
-          <h2 className={styles.sectionTitle}>المرفقات</h2>
-          {script.files.map((file) => (
-            <AttachmentButton key={file.id} label={file.label} meta={`PDF · ${file.size}`} icon="file" />
-          ))}
-        </Card>
+        <ContactRequestPanel scriptId={script.id} authorName={script.author.name} />
       </PageBody>
     </>
   );

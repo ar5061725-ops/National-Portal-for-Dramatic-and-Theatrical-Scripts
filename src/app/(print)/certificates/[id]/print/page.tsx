@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getCertificate } from '@/lib/api/scripts';
+import { qrSvg, verifyUrl } from '@/lib/qr';
 import { PrintableCertificate } from '@/features/certificate/PrintableCertificate';
 
 export const metadata: Metadata = { title: 'طباعة الشهادة' };
@@ -9,5 +10,5 @@ export default async function PrintCertificatePage({ params }: { params: Promise
   const { id } = await params;
   const certificate = await getCertificate(id);
   if (!certificate) notFound();
-  return <PrintableCertificate certificate={certificate} />;
+  return <PrintableCertificate certificate={certificate} qrSvg={await qrSvg(verifyUrl(certificate.verifyCode))} />;
 }

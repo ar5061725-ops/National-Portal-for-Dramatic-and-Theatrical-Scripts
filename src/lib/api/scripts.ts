@@ -1,6 +1,6 @@
 import { PLACEHOLDERS } from '@/config/site';
-import type { Certificate, Script } from '@/types';
-import { wait } from './client';
+import type { Certificate, CertificateVerification, ContactRequestInput, Script } from '@/types';
+import { ApiError, wait } from './client';
 
 const SCRIPTS: Script[] = [
   {
@@ -16,10 +16,6 @@ const SCRIPTS: Script[] = [
     stats: [
       { label: 'عدد الحلقات', value: '30 حلقة' },
       { label: 'مدة الحلقة', value: '45 دقيقة' },
-    ],
-    files: [
-      { id: 'exec', label: 'الملف التنفيذي', size: '2.4 MB' },
-      { id: 'logline', label: 'اللوجلاين', size: '180 KB' },
     ],
     licenseNo: PLACEHOLDERS.licenseNo,
     licenseDate: PLACEHOLDERS.date,
@@ -38,10 +34,6 @@ const SCRIPTS: Script[] = [
       { label: 'عدد الفصول', value: '3 فصول' },
       { label: 'مدة العرض', value: '90 دقيقة' },
     ],
-    files: [
-      { id: 'exec', label: 'الملف التنفيذي', size: '1.1 MB' },
-      { id: 'logline', label: 'اللوجلاين', size: '95 KB' },
-    ],
     licenseNo: PLACEHOLDERS.licenseNo,
     licenseDate: PLACEHOLDERS.date,
   },
@@ -58,10 +50,6 @@ const SCRIPTS: Script[] = [
     stats: [
       { label: 'عدد الحلقات', value: '15 حلقة' },
       { label: 'مدة الحلقة', value: '45 دقيقة' },
-    ],
-    files: [
-      { id: 'exec', label: 'الملف التنفيذي', size: '3.0 MB' },
-      { id: 'logline', label: 'اللوجلاين', size: '150 KB' },
     ],
     licenseNo: PLACEHOLDERS.licenseNo,
     licenseDate: PLACEHOLDERS.date,
@@ -80,14 +68,15 @@ const SCRIPTS: Script[] = [
       { label: 'عدد الفصول', value: 'فصلان' },
       { label: 'مدة العرض', value: '60 دقيقة' },
     ],
-    files: [
-      { id: 'exec', label: 'الملف التنفيذي', size: '1.6 MB' },
-      { id: 'logline', label: 'اللوجلاين', size: '110 KB' },
-    ],
     licenseNo: PLACEHOLDERS.licenseNo,
     licenseDate: PLACEHOLDERS.date,
   },
 ];
+
+/** رموز التحقق للشهادات (في النظام الحقيقي: عشوائية وفريدة وتُحفظ في جدول certificates). */
+const VERIFY_CODES: Record<string, { code: string; status: 'active' | 'revoked' }> = {
+  'bayt-ala-albahr': { code: 'KDD-7F3Q-92XA', status: 'active' },
+};
 
 export async function getApprovedScripts(): Promise<Script[]> {
   await wait();
@@ -101,7 +90,8 @@ export async function getScriptById(id: string): Promise<Script | null> {
 
 export async function getCertificate(scriptId: string): Promise<Certificate | null> {
   const script = await getScriptById(scriptId);
-  if (!script) return null;
+  const verification = VERIFY_CODES[scriptId];
+  if (!script || !verification) return null;
   const [length] = script.stats;
   return {
     scriptId: script.id,
@@ -115,5 +105,33 @@ export async function getCertificate(scriptId: string): Promise<Certificate | nu
     licenseDate: script.licenseDate,
     workNo: PLACEHOLDERS.workNo,
     score: script.score,
+    verifyCode: verification.code,
+    status: verification.status,
   };
+}
+
+/** التحقق العام من شهادة: يعيد الحقول المصرّح بإظهارها فقط. */
+export async function verifyCertificate(code: string): Promise<CertificateVerification | null> {
+  await wait();
+  const entry = Object.entries(VERIFY_CODES).find(([, v]) => v.code === code.toUpperCase());
+  if (!entry) return null;
+  const [scriptId, { status }] = entry;
+  const script = SCRIPTS.find((s) => s.id === scriptId);
+  if (!script) return null;
+  return {
+    code: code.toUpperCase(),
+    status,
+    title: script.title,
+    author: script.author.name,
+    workTypeLabel: script.kind,
+    licenseNo: script.licenseNo,
+    licenseDate: script.licenseDate,
+  };
+}
+
+/** طلب تواصل من منتج موثّق؛ يقرر الكاتب قبوله أو رفضه ولا تُكشف بياناته قبل موافقته. */
+export async function requestContact(input: ContactRequestInput): Promise<void> {
+  await wait(800);
+  if (!SCRIPTS.some((s) => s.id === input.scriptId)) throw new ApiError('العمل غير موجود', 404);
+  if (input.purpose.trim().length < 10) throw new ApiError('اكتب غرض التواصل في جملة واضحة (10 أحرف على الأقل)', 422);
 }

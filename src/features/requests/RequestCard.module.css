@@ -17,9 +17,22 @@
   font-weight: 700;
 }
 
+.titleLink {
+  color: inherit;
+}
+
 .meta {
   font-size: 13px;
   color: var(--muted);
+}
+
+.reason {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--danger-bg);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--danger-ink);
 }
 
 .steps {

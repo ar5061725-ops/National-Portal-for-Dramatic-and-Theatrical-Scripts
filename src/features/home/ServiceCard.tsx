@@ -9,17 +9,20 @@ interface ServiceCardProps {
   icon: IconName;
   title: string;
   description: string;
-  /** البطاقة الأساسية بأيقونة داكنة */
+  /** وسم صغير فوق العنوان، مثل «مسار الكاتب المبتدئ» */
+  tag?: string;
+  /** الإجراء الرئيس بأيقونة داكنة */
   primary?: boolean;
 }
 
-export function ServiceCard({ href, icon, title, description, primary }: ServiceCardProps) {
+export function ServiceCard({ href, icon, title, description, tag, primary }: ServiceCardProps) {
   return (
     <Link href={href} className={cn('pressable', styles.card)}>
       <span className={cn(styles.icon, primary && styles.iconPrimary)}>
         <Icon name={icon} size={28} strokeWidth={1.6} />
       </span>
       <span className={styles.text}>
+        {tag && <span className={styles.tag}>{tag}</span>}
         <span className={styles.title}>{title}</span>
         <span className={styles.description}>{description}</span>
       </span>

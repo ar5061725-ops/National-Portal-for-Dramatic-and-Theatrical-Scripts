@@ -1,0 +1,13 @@
+.qr {
+  flex-shrink: 0;
+  padding: 6px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1.5px solid var(--border-strong);
+}
+
+.qr svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

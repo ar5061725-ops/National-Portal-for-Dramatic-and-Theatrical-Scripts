@@ -8,11 +8,14 @@ import type { IconName } from '@/components/ui/Icon';
 import styles from './ProfileScreen.module.css';
 import { MenuLink } from './MenuLink';
 import { EditProfileButton } from './EditProfileButton';
+import { PreferencesCard } from './PreferencesCard';
 
 const MENU: { label: string; href: string; icon: IconName }[] = [
   { label: 'الإشعارات', href: ROUTES.notifications, icon: 'bell' },
   { label: 'الإيصالات والمدفوعات', href: ROUTES.receipts, icon: 'receipt' },
-  { label: 'الشروط والإرشادات', href: ROUTES.terms, icon: 'info' },
+  { label: 'الشروط والإرشادات', href: ROUTES.guide, icon: 'info' },
+  { label: 'المذكرة التعليمية', href: ROUTES.memo, icon: 'fileLines' },
+  { label: 'الدعم', href: ROUTES.support, icon: 'mail' },
 ];
 
 export function ProfileScreen({ profile }: { profile: ProfileData }) {
@@ -68,6 +71,8 @@ export function ProfileScreen({ profile }: { profile: ProfileData }) {
             <MenuLink key={item.href} {...item} />
           ))}
         </Card>
+
+        <PreferencesCard />
 
         <ButtonLink href={ROUTES.splash} variant="danger" size="md" block>
           تسجيل الخروج

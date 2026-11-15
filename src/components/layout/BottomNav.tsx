@@ -10,9 +10,9 @@ import styles from './BottomNav.module.css';
 
 const ITEMS: { href: string; label: string; icon: IconName }[] = [
   { href: ROUTES.home, label: 'الرئيسية', icon: 'home' },
-  { href: ROUTES.scripts, label: 'النصوص', icon: 'fileCheck' },
-  { href: ROUTES.requests, label: 'طلباتي', icon: 'list' },
-  { href: ROUTES.profile, label: 'حسابي', icon: 'user' },
+  { href: ROUTES.approved, label: 'النصوص', icon: 'fileCheck' },
+  { href: ROUTES.submissions, label: 'طلباتي', icon: 'list' },
+  { href: ROUTES.account, label: 'حسابي', icon: 'user' },
 ];
 
 export function BottomNav() {

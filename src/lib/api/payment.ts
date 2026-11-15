@@ -1,17 +1,18 @@
-import type { PaymentMethodId, SubmissionDraft } from '@/types';
+import { PAYMENT_MESSAGES } from '@/config/payment';
+import type { PaymentMethodId } from '@/types';
 import { ApiError, wait } from './client';
 
 export interface PaymentResult {
   orderNo: string;
 }
 
-export async function payForSubmission(
-  method: PaymentMethodId,
-  draft: Pick<SubmissionDraft, 'title'>,
-): Promise<PaymentResult> {
+/**
+ * ينشئ محاولة دفع (مبلغها من قاعدة البيانات لا من المتصفح) ثم ينتظر تأكيد المزوّد.
+ * في النسخة الحقيقية: Edge Function (payment-create) ثم Webhook موقّع.
+ */
+export async function payForSubmission(requestNo: string, method: PaymentMethodId): Promise<PaymentResult> {
   await wait(1600);
-  if (!method) throw new ApiError('اختر طريقة الدفع', 422);
-  if (!draft.title.trim()) throw new ApiError('لا يوجد طلب لإكماله', 422);
-  const serial = String(Date.now()).slice(-4);
-  return { orderNo: `NSP-${new Date().getFullYear()}-${serial}` };
+  if (method !== 'knet') throw new ApiError('وسيلة الدفع هذه غير مفعّلة بعد', 422);
+  if (!requestNo) throw new ApiError(PAYMENT_MESSAGES.failed, 422);
+  return { orderNo: requestNo };
 }

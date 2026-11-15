@@ -5,6 +5,7 @@ import { MESSAGES, SHARE, SITE } from '@/config/site';
 import { scoreText } from '@/lib/text';
 import { useToast } from '@/providers/ToastProvider';
 import type { Certificate } from '@/types';
+import { QrCode } from '@/components/ui/QrCode';
 import { BackButton } from '@/components/layout/PageHeader';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
@@ -20,11 +21,19 @@ function Field({ label, children, accent }: { label: string; children: React.Rea
   );
 }
 
-export function CertificateView({ certificate }: { certificate: Certificate }) {
+interface CertificateViewProps {
+  certificate: Certificate;
+  /** رمز QR (SVG) يشير إلى رابط التحقق العام */
+  qrSvg: string;
+  verifyUrl: string;
+}
+
+export function CertificateView({ certificate, qrSvg, verifyUrl }: CertificateViewProps) {
   const { showToast } = useToast();
 
   async function handleShare() {
-    const url = window.location.href;
+    // نشارك رابط التحقق العام لا صفحة الشهادة الخاصة بالمؤلف
+    const url = verifyUrl;
     try {
       if (navigator.share) {
         await navigator.share({ ...SHARE, url });
@@ -42,7 +51,7 @@ export function CertificateView({ certificate }: { certificate: Certificate }) {
   return (
     <div className={styles.page}>
       <div className={styles.bar}>
-        <BackButton href={ROUTES.requests} />
+        <BackButton href={ROUTES.submissions} />
         <h1 className={styles.barTitle}>شهادة الإجازة</h1>
         <span className={styles.spacer} />
       </div>
@@ -81,10 +90,12 @@ export function CertificateView({ certificate }: { certificate: Certificate }) {
                   {scoreText(certificate.score)}
                 </span>
               </div>
-              <div className={styles.qr}>
-                رمز QR
-                <br />
-                للتحقق
+              <div className={styles.verify}>
+                <QrCode svg={qrSvg} size={92} label="رمز QR للتحقق من الشهادة" />
+                <span className={styles.fieldLabel}>رمز التحقق</span>
+                <b dir="ltr" className={styles.code}>
+                  {certificate.verifyCode}
+                </b>
               </div>
             </div>
           </div>

@@ -2,6 +2,7 @@ import { ROUTES } from '@/config/routes';
 import { SITE } from '@/config/site';
 import type { Certificate } from '@/types';
 import { Logo } from '@/components/ui/Logo';
+import { QrCode } from '@/components/ui/QrCode';
 import { StarRating } from '@/components/ui/StarRating';
 import { scoreText } from '@/lib/text';
 import { FitToWidth } from './FitToWidth';
@@ -17,7 +18,7 @@ function Cell({ label, value, gold, last }: { label: string; value: string; gold
   );
 }
 
-export function PrintableCertificate({ certificate }: { certificate: Certificate }) {
+export function PrintableCertificate({ certificate, qrSvg }: { certificate: Certificate; qrSvg: string }) {
   return (
     <div className={styles.page}>
       <PrintToolbar backHref={ROUTES.certificate(certificate.scriptId)} />
@@ -85,10 +86,9 @@ export function PrintableCertificate({ certificate }: { certificate: Certificate
                   <span>التوقيع</span>
                 </div>
                 <div className={styles.stamp}>الختم الرسمي</div>
-                <div className={styles.qr}>
-                  رمز QR
-                  <br />
-                  للتحقق
+                <div className={styles.qrBox}>
+                  <QrCode svg={qrSvg} size={104} label="رمز QR للتحقق من الشهادة" />
+                  <b dir="ltr" className={styles.verifyCode}>{certificate.verifyCode}</b>
                 </div>
                 <div className={styles.signature}>
                   <span className={styles.line} />

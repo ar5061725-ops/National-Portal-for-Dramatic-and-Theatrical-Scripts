@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useReducer,
 import type { ReactNode } from 'react';
 import type { RequiredFileId, SubmissionDraft, WorkType } from '@/types';
 
+/** المسودة تُحفظ في المتصفح ليستعيد الكاتب آخر خطوة محفوظة عند العودة. */
 const STORAGE_KEY = 'nsp.submission-draft.v1';
 
 export const EMPTY_DRAFT: SubmissionDraft = {
@@ -69,7 +70,7 @@ export function SubmissionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      const raw = sessionStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) dispatch({ type: 'hydrate', draft: { ...EMPTY_DRAFT, ...JSON.parse(raw) } });
     } catch {
       // التخزين غير متاح أو البيانات تالفة: نبدأ بمسودة فارغة.
@@ -80,7 +81,7 @@ export function SubmissionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!hydrated) return;
     try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
     } catch {
       // تجاهل أخطاء امتلاء التخزين أو الوضع الخاص.
     }

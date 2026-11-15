@@ -210,6 +210,21 @@
   border-top: 1px solid #1a2433;
 }
 
+.qrBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  color: #4a5568;
+}
+
+.verifyCode {
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  color: #1a2433;
+}
+
 .stamp,
 .qr {
   display: flex;

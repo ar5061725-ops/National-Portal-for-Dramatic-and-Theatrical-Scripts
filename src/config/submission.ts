@@ -1,5 +1,11 @@
-import type { PaymentMethodId, RequiredFileId, WorkType } from '@/types';
+import type { RequiredFileId, WorkType } from '@/types';
 import type { IconName } from '@/components/ui/Icon';
+
+/**
+ * نطاق النسخة الأولى: النصوص الدرامية والمسرحية. نوع «الفيلم» الوارد في النموذج الأصلي
+ * يبقى قابلاً للتفعيل بقرار نطاق عبر المتغير NEXT_PUBLIC_ENABLE_FILM=true.
+ */
+const FILM_ENABLED = process.env.NEXT_PUBLIC_ENABLE_FILM === 'true';
 
 export interface WorkTypeField {
   id: string;
@@ -11,6 +17,7 @@ export interface WorkTypeConfig {
   id: WorkType;
   label: string;
   icon: IconName;
+  enabled: boolean;
   detailsTitle: string;
   fields: [WorkTypeField, WorkTypeField];
   /** الحقل الذي يظهر كوصف لطول العمل + صيغة عرضه. */
@@ -22,6 +29,7 @@ export const WORK_TYPES: WorkTypeConfig[] = [
     id: 'play',
     label: 'مسرحية',
     icon: 'theatre',
+    enabled: true,
     detailsTitle: 'تفاصيل المسرحية',
     fields: [
       { id: 'duration', label: 'مدة العرض (دقيقة)', placeholder: '90' },
@@ -33,6 +41,7 @@ export const WORK_TYPES: WorkTypeConfig[] = [
     id: 'series',
     label: 'مسلسل درامي',
     icon: 'series',
+    enabled: true,
     detailsTitle: 'تفاصيل المسلسل',
     fields: [
       { id: 'episodes', label: 'عدد الحلقات', placeholder: '30' },
@@ -44,6 +53,7 @@ export const WORK_TYPES: WorkTypeConfig[] = [
     id: 'film',
     label: 'فيلم سينمائي',
     icon: 'film',
+    enabled: FILM_ENABLED,
     detailsTitle: 'تفاصيل الفيلم',
     fields: [
       { id: 'duration', label: 'مدة الفيلم (دقيقة)', placeholder: '110' },
@@ -72,11 +82,8 @@ export const REQUIRED_FILES: { id: RequiredFileId; label: string }[] = [
 export const LOGLINE_MAX = 300;
 export const MAX_PDF_MB = 20;
 
-export const PAYMENT_METHODS: { id: PaymentMethodId; label: string; hint: string }[] = [
-  { id: 'knet', label: 'كي نت', hint: 'الدفع ببطاقة البنك المحلية' },
-  { id: 'card', label: 'بطاقة ائتمانية', hint: 'فيزا أو ماستركارد' },
-  { id: 'apple', label: 'Apple Pay', hint: 'الدفع السريع من الآيفون' },
-];
+/** الأنواع المفعّلة في النسخة الحالية. */
+export const ENABLED_WORK_TYPES = WORK_TYPES.filter((t) => t.enabled);
 
 export function getWorkType(id: WorkType): WorkTypeConfig {
   return WORK_TYPES.find((t) => t.id === id) ?? WORK_TYPES[1];

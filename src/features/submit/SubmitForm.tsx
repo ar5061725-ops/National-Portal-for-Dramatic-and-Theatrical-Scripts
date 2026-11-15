@@ -1,12 +1,14 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { ROUTES } from '@/config/routes';
-import { GENRES, LOGLINE_MAX, REQUIRED_FILES, getWorkType } from '@/config/submission';
+import { MESSAGES } from '@/config/site';
+import { ENABLED_WORK_TYPES, GENRES, LOGLINE_MAX, REQUIRED_FILES, getWorkType } from '@/config/submission';
 import { countUploadedFiles, getMissingSteps } from '@/lib/submission';
 import { useSubmission } from '@/providers/SubmissionProvider';
+import { useToast } from '@/providers/ToastProvider';
 import type { RequiredFileId, UserAccount } from '@/types';
 import { PageSkeleton } from '@/components/feedback/PageSkeleton';
 import { FormSection } from '@/components/layout/FormSection';
@@ -28,8 +30,14 @@ const STEPS = ['الحساب', 'بيانات العمل', 'الدفع'];
 export function SubmitForm({ user }: { user: UserAccount }) {
   const router = useRouter();
   const { draft, hydrated, patch, setType, toggleGenre, setDetail, setFile } = useSubmission();
+  const { showToast } = useToast();
   const [showErrors, setShowErrors] = useState(false);
   const [fileErrors, setFileErrors] = useState<Partial<Record<RequiredFileId, string>>>({});
+
+  // مسودة محفوظة بنوع عمل غير مفعّل في النسخة الحالية (مثل الفيلم) تعود لأول نوع مفعّل
+  useEffect(() => {
+    if (hydrated && !ENABLED_WORK_TYPES.some((t) => t.id === draft.type)) setType(ENABLED_WORK_TYPES[0].id);
+  }, [hydrated, draft.type, setType]);
 
   if (!hydrated) return <PageSkeleton />;
 
@@ -40,18 +48,30 @@ export function SubmitForm({ user }: { user: UserAccount }) {
   const missing = getMissingSteps(draft);
   const uploaded = countUploadedFiles(draft);
 
+  function saveDraft() {
+    patch({ savedAt: new Date().toISOString() });
+    showToast(MESSAGES.draftSaved);
+  }
+
+  /** إرسال الطلب: قفل النسخة وإصدار رقم الطلب، ثم الانتقال إلى بوابة الدفع. */
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (missing.length > 0) {
       setShowErrors(true);
       return;
     }
-    router.push(ROUTES.payment);
+    const requestNo = draft.requestNo ?? `NSP-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`;
+    patch({ requestNo });
+    router.push(ROUTES.payment(requestNo));
   }
+
+  const savedLabel = draft.savedAt
+    ? `آخر حفظ: ${new Date(draft.savedAt).toLocaleTimeString('ar-KW', { hour: '2-digit', minute: '2-digit' })}`
+    : 'تُحفظ بياناتك تلقائياً في هذا الجهاز';
 
   return (
     <>
-      <PageHeader rounded start={<BackButton href={ROUTES.home} />} barTitle="تقديم نص جديد" end={<Logo size={44} />}>
+      <PageHeader rounded start={<BackButton href={ROUTES.submissions} />} barTitle="تقديم نص جديد" end={<Logo size={44} />}>
         <Stepper steps={STEPS} current={1} />
       </PageHeader>
 
@@ -175,9 +195,16 @@ export function SubmitForm({ user }: { user: UserAccount }) {
           )}
 
           <Button type="submit" size="xl" elevated block>
-            إكمال والانتقال إلى الدفع
+            متابعة إلى الدفع
             <Icon name="chevronLeft" size={20} strokeWidth={2.2} />
           </Button>
+          <Button variant="outline" size="lg" block onClick={saveDraft}>
+            <Icon name="fileCheck" size={20} />
+            حفظ المسودة
+          </Button>
+          <p className={styles.saved} aria-live="polite">
+            {savedLabel}
+          </p>
           <p className={styles.legal}>بالضغط على إكمال، تقرّ بأن النص من تأليفك وأن البيانات المدخلة صحيحة</p>
         </form>
       </PageBody>

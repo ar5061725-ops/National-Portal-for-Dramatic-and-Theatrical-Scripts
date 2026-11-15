@@ -19,7 +19,7 @@ export async function getProfile(): Promise<ProfileData> {
   return {
     user,
     stats: {
-      submitted: requests.length,
+      submitted: requests.filter((r) => r.status !== 'draft').length,
       approved: requests.filter((r) => r.status === 'approved').length,
       needsRevision: requests.filter((r) => r.status === 'revision').length,
     },

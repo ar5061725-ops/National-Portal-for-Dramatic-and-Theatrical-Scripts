@@ -18,11 +18,11 @@ npm run build && npm start
 ```
 src/
 ├─ app/                    المسارات فقط (صفحات رفيعة تجلب البيانات وتستدعي feature)
-│  ├─ (tabs)/              صفحات بشريط تنقل سفلي: home, scripts, requests, profile
-│  ├─ (flow)/              تدفقات بلا شريط: splash, login, submit, payment, committee,
-│  │                       notifications, receipts, terms, scripts/[id],
-│  │                       requests/[id]/feedback, certificate/[id]
-│  ├─ (print)/             certificate/[id]/print (A4 أفقي، بلا إطار التطبيق)
+│  ├─ (tabs)/              صفحات بشريط تنقل سفلي: home, approved, submissions, account
+│  ├─ (flow)/              تدفقات بلا شريط: splash, login, submissions/new, submissions/[id], payments/[id],
+│  │                       approved/[slug], certificates/[id], verify/[code], committee, notifications,
+│  │                       receipts, guide, support, learning/series-engineering
+│  ├─ (print)/             certificates/[id]/print (A4 أفقي، بلا إطار التطبيق)
 │  └─ layout.tsx · not-found.tsx · globals.css (متغيرات التصميم)
 ├─ components/
 │  ├─ ui/                  لبنات عامة قابلة لإعادة الاستخدام (Button, Card, Badge, TextField,
@@ -65,3 +65,25 @@ src/
 - رفع الملفات إلى خادم/تخزين (الآن تُحفظ أسماؤها فقط).
 - بوابة دفع حقيقية، وتوليد PDF للشهادة والإيصال، ورمز QR للتحقق.
 - فتح المرفقات وتحميلها (حالياً تنبيهات مؤقتة).
+
+## مطابقة وثيقة المشروع («المشروع النهائي المقدَّم إلى أكاديمية كودد»)
+
+| ما في الوثيقة | الحالة في المنصة |
+|---|---|
+| ألوان شاشات الملحق (16 شاشة) | مطابقة: الأزرق `#125A95` والخلفية `#F1F5FA` والذهبي `#D4AF37`، وقيست من صور الملحق. الحالة تُكتب بجانب لونها دائماً |
+| مسارات «دليل الشاشات» | معتمدة: `/approved` `/approved/[slug]` `/submissions/new` `/submissions` `/submissions/[id]` `/payments/[id]` `/certificates/[id]` `/verify/[code]` `/account` `/guide` `/support` `/learning/series-engineering`. المسارات القديمة تُحوَّل تلقائياً (`next.config.mjs`) |
+| الرئيسية: التقديم إجراء رئيس، والنصوص المجازة ثانٍ، والمذكرة بطاقة مستقلة | منفّذة، مع «اقرأ المذكرة / تحميل PDF» |
+| المذكرة التعليمية (المطورة، 91 صفحة) | `public/learning/series-engineering.pdf` + صفحة بالفهرس (5 أبواب) وخرائط القراءة الثلاث |
+| الدليل ببيانات مختصرة وتصفية بالنوع والتصنيف | منفّذ؛ وبيانات اتصال الكاتب لا تظهر بل «طلب تواصل» يقرره الكاتب |
+| حالات الطلب: مسودة ← بانتظار الدفع ← مستلم ← قيد المراجعة ← مطلوب تعديل / مجاز / مرفوض | منفّذة بألوانها ونصوصها وإجراء مناسب لكل حالة وسبب مكتوب للقرار |
+| الدفع: كي نت أولاً، والبطاقات وApple Pay لاحقاً، ورسائل الحالة | منفّذ (`config/payment.ts`) |
+| مسودة تُحفظ ويستعيدها الكاتب، وزر «حفظ المسودة» | منفّذ (localStorage) |
+| نوع «الفيلم» قابل للتفعيل بقرار نطاق | مخفي افتراضياً؛ يُفعَّل بـ `NEXT_PUBLIC_ENABLE_FILM=true` |
+| مراجعة محجوبة الهوية، وتعارض المصالح، ومعايير، وملاحظات بالمشهد، وقرار مسبَّب | منفّذة في `/committee` |
+| الشهادة برمز QR وصفحة تحقق عامة بحقول مصرّح بها | منفّذة (QR حقيقي مُولَّد على الخادم) |
+| الإشعارات برقم الطلب ووقت القراءة، والإيصالات والاسترداد | منفّذة |
+| الدعم: دليل مساعدة وتذكرة برقم الطلب | منفّذ |
+| تأكيد البريد عند التسجيل | منفّذ كشاشة (الإرسال الفعلي يحتاج SMTP) |
+
+### ما لم يُنفَّذ (يحتاج بنية خلفية وحسابات)
+Supabase (Auth وPostgreSQL وRLS وRPC وStorage)، وظائف Edge للدفع وWebhook MyFatoorah، وSMTP، وCI على GitHub/Vercel، وبيئات Preview. الواجهة جاهزة لربطها: كل استدعاء بيانات يمر عبر `src/lib/api/` (بيانات تجريبية حالياً).
