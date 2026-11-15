@@ -27,7 +27,7 @@ function toApiError(error: AuthError): ApiError {
     return new ApiError('محاولات كثيرة؛ انتظر قليلاً ثم أعد المحاولة', 429);
   }
   if (code === 'user_already_exists' || code === 'email_exists') return new ApiError('هذا البريد مسجَّل مسبقاً، سجّل الدخول', 409);
-  if (error.name === 'AuthRetryableFetchError' || status === 0) return new ApiError('تعذّر الاتصال بالخادم، تحقق من الإنترنت وأعد المحاولة', 503);
+  if (error.name === 'AuthRetryableFetchError' || status === 0) return new ApiError(`تعذّر الاتصال بالخادم، تحقق من الإنترنت وأعد المحاولة (${error.message.slice(0, 80)})`, 503);
   if (code === 'email_address_not_authorized') return new ApiError('هذا البريد غير مسموح له بالاستلام بعد؛ فعّل بريد SMTP المخصص للمشروع', 403);
   if (code === 'signup_disabled') return new ApiError('التسجيل معطّل مؤقتاً', 403);
   return new ApiError(`تعذّر إكمال الطلب، حاول مرة أخرى${code ? ` (${code})` : ''}`, status);
