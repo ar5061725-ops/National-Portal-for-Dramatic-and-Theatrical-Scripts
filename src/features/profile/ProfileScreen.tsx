@@ -2,12 +2,12 @@ import { ROUTES } from '@/config/routes';
 import type { ProfileData } from '@/types';
 import { PageBody } from '@/components/layout/PageBody';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { ButtonLink } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import type { IconName } from '@/components/ui/Icon';
 import styles from './ProfileScreen.module.css';
 import { MenuLink } from './MenuLink';
 import { EditProfileButton } from './EditProfileButton';
+import { LogoutButton } from './LogoutButton';
 import { PreferencesCard } from './PreferencesCard';
 
 const MENU: { label: string; href: string; icon: IconName }[] = [
@@ -74,9 +74,7 @@ export function ProfileScreen({ profile }: { profile: ProfileData }) {
 
         <PreferencesCard />
 
-        <ButtonLink href={ROUTES.splash} variant="danger" size="md" block>
-          تسجيل الخروج
-        </ButtonLink>
+        <LogoutButton />
       </PageBody>
     </>
   );

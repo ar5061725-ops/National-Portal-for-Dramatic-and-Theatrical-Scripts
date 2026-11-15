@@ -88,7 +88,11 @@ export function LoginForm() {
 
   // التوجيه بعد النجاح يعتمد على الحالة (الدوال لا تعيد قيمة)
   useEffect(() => {
-    if (succeeded) router.push(ROUTES.newSubmission);
+    if (!succeeded) return;
+    // وجهة العودة بعد الدخول (من ?next=) مع قبول المسارات الداخلية فقط لمنع التحويل لمواقع خارجية
+    const next = new URLSearchParams(window.location.search).get('next');
+    router.replace(next && next.startsWith('/') && !next.startsWith('//') ? next : ROUTES.newSubmission);
+    router.refresh();
   }, [succeeded, router]);
 
   // بعد إنشاء الحساب: يجب تأكيد البريد (رابط يُستخدم مرة واحدة) قبل الدخول
