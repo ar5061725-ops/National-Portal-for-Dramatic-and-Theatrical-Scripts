@@ -1,7 +1,7 @@
 import type { ProfileData, UserAccount } from '@/types';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { ApiError } from './client';
-import { getMyRequests } from './requests';
+import { getMyRequests } from './requests.server';
 
 const ROLE_LABELS: Record<string, string> = {
   committee_manager: 'مشرف اللجنة',

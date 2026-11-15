@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getMyRequests } from '@/lib/api/requests';
+import { getMyRequests } from '@/lib/api/requests.server';
 import { RequestsScreen } from '@/features/requests/RequestsScreen';
 
 export const metadata: Metadata = { title: 'طلباتي' };

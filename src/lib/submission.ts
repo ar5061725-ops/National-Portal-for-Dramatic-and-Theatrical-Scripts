@@ -15,6 +15,9 @@ export function countUploadedFiles(draft: SubmissionDraft): number {
 export function getMissingSteps(draft: SubmissionDraft): string[] {
   const missing: string[] = [];
   if (!draft.title.trim()) missing.push('اكتب عنوان العمل في الخطوة 2');
+  const type = getWorkType(draft.type);
+  const length = Number(draft.details[`${type.id}.${type.length.fieldId}`]);
+  if (!Number.isInteger(length) || length < 1) missing.push(`أدخل ${type.fields.find((f) => f.id === type.length.fieldId)?.label ?? 'تفاصيل العمل'} في الخطوة 3`);
   if (!draft.logline.trim()) missing.push('اكتب اللوجلاين في الخطوة 4');
   const remaining = REQUIRED_FILES.length - countUploadedFiles(draft);
   if (remaining > 0) missing.push(`ارفع ${remaining} من الملفات المطلوبة في الخطوة 5 (المظللة بالأحمر)`);

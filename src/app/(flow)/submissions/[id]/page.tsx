@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getRequestDetail } from '@/lib/api/requests';
+import { getRequestDetail } from '@/lib/api/requests.server';
 import { SubmissionDetail } from '@/features/requests/SubmissionDetail';
 
 export const metadata: Metadata = { title: 'تفاصيل الطلب' };

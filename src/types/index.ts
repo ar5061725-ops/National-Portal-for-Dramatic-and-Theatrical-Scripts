@@ -222,6 +222,8 @@ export interface SubmissionDraft {
   files: Partial<Record<RequiredFileId, string>>;
   /** يُصدر عند الإرسال (قفل النسخة)، وهو معرّف صفحة الدفع. */
   requestNo?: string;
+  /** نسخة المسودة المنشأة في Supabase (لاستئناف محاولة تقديم فاشلة دون تكرار الطلب). */
+  versionId?: string;
   /** وقت آخر حفظ للمسودة (ISO). */
   savedAt?: string;
 }

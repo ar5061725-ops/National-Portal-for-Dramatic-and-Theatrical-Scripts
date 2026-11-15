@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getPayableRequest } from '@/lib/api/requests';
+import { getPayableRequest } from '@/lib/api/requests.server';
 import { PaymentFlow } from '@/features/payment/PaymentFlow';
 
 export const metadata: Metadata = { title: 'بوابة الدفع' };

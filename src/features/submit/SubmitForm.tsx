@@ -6,7 +6,9 @@ import type { FormEvent } from 'react';
 import { ROUTES } from '@/config/routes';
 import { MESSAGES } from '@/config/site';
 import { ENABLED_WORK_TYPES, GENRES, LOGLINE_MAX, REQUIRED_FILES, getWorkType } from '@/config/submission';
+import { submitNewSubmission } from '@/lib/api/submissions-client';
 import { countUploadedFiles, getMissingSteps } from '@/lib/submission';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useSubmission } from '@/providers/SubmissionProvider';
 import { useToast } from '@/providers/ToastProvider';
 import type { RequiredFileId, UserAccount } from '@/types';
@@ -29,9 +31,12 @@ const STEPS = ['الحساب', 'بيانات العمل', 'الدفع'];
 
 export function SubmitForm({ user }: { user: UserAccount }) {
   const router = useRouter();
-  const { draft, hydrated, patch, setType, toggleGenre, setDetail, setFile } = useSubmission();
+  const { draft, hydrated, patch, setType, toggleGenre, setDetail, setFile, reset } = useSubmission();
   const { showToast } = useToast();
   const [showErrors, setShowErrors] = useState(false);
+  // ملفات PDF تبقى في الذاكرة فقط (لا تُحفظ في المتصفح)؛ المسودة المحلية تحفظ أسماءها فقط
+  const [fileObjects, setFileObjects] = useState<Partial<Record<RequiredFileId, File>>>({});
+  const submit = useAsyncAction(submitNewSubmission);
   const [fileErrors, setFileErrors] = useState<Partial<Record<RequiredFileId, string>>>({});
 
   // مسودة محفوظة بنوع عمل غير مفعّل في النسخة الحالية (مثل الفيلم) تعود لأول نوع مفعّل
@@ -53,16 +58,28 @@ export function SubmitForm({ user }: { user: UserAccount }) {
     showToast(MESSAGES.draftSaved);
   }
 
-  /** إرسال الطلب: قفل النسخة وإصدار رقم الطلب، ثم الانتقال إلى بوابة الدفع. */
-  function handleSubmit(event: FormEvent) {
+  /** إرسال الطلب إلى Supabase: رفع الملفات وفحصها وقفل النسخة، ثم الدفع إن كان مفعّلاً أو قائمة الطلبات. */
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (missing.length > 0) {
       setShowErrors(true);
       return;
     }
-    const requestNo = draft.requestNo ?? `NSP-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`;
-    patch({ requestNo });
-    router.push(ROUTES.payment(requestNo));
+    const result = await submit.run({
+      draft,
+      files: fileObjects,
+      versionId: draft.versionId,
+      onVersion: (versionId) => patch({ versionId }),
+    });
+    if (!result) return;
+    reset();
+    if (result.status === 'awaiting_payment') {
+      router.push(ROUTES.payment(result.publicNo));
+    } else {
+      showToast(`تم استلام طلبك ${result.publicNo}`);
+      router.push(ROUTES.submissions);
+      router.refresh();
+    }
   }
 
   const savedLabel = draft.savedAt
@@ -173,6 +190,7 @@ export function SubmitForm({ user }: { user: UserAccount }) {
                 error={fileErrors[file.id]}
                 onFile={(f) => {
                   setFile(file.id, f.name);
+                  setFileObjects((all) => ({ ...all, [file.id]: f }));
                   setFileErrors((e) => ({ ...e, [file.id]: undefined }));
                 }}
                 onError={(message) => setFileErrors((e) => ({ ...e, [file.id]: message }))}
@@ -194,8 +212,17 @@ export function SubmitForm({ user }: { user: UserAccount }) {
             </div>
           )}
 
-          <Button type="submit" size="xl" elevated block>
-            متابعة إلى الدفع
+          {submit.isError && (
+            <div role="alert" className={styles.alert}>
+              <p className={styles.alertTitle}>
+                <Icon name="alert" size={20} strokeWidth={2} />
+                {submit.error}
+              </p>
+            </div>
+          )}
+
+          <Button type="submit" size="xl" elevated block loading={submit.isLoading}>
+            إرسال الطلب
             <Icon name="chevronLeft" size={20} strokeWidth={2.2} />
           </Button>
           <Button variant="outline" size="lg" block onClick={saveDraft}>
