@@ -55,11 +55,11 @@ export function IdentityFields({ values, errors, confirmed, onChange, onConfirm 
 
       <TextField label="الرقم المدني" ltr inputMode="numeric" maxLength={12} placeholder="12 رقماً" autoComplete="off" {...field('civilId')} />
       <fieldset className={styles.address}>
-        <legend>تاريخ الميلاد (كما في البطاقة)</legend>
+        <legend>Date of Birth (as printed on the card)</legend>
         <div className={styles.dateRow}>
-          <TextField label="اليوم" ltr inputMode="numeric" maxLength={2} placeholder="01" value={parts.d} onChange={(e) => setPart('d', e.target.value)} />
-          <TextField label="الشهر" ltr inputMode="numeric" maxLength={2} placeholder="10" value={parts.m} onChange={(e) => setPart('m', e.target.value)} />
-          <TextField label="السنة" ltr inputMode="numeric" maxLength={4} placeholder="1984" value={parts.y} onChange={(e) => setPart('y', e.target.value)} />
+          <TextField label="Day" ltr inputMode="numeric" maxLength={2} placeholder="01" value={parts.d} onChange={(e) => setPart('d', e.target.value)} />
+          <TextField label="Month" ltr inputMode="numeric" maxLength={2} placeholder="10" value={parts.m} onChange={(e) => setPart('m', e.target.value)} />
+          <TextField label="Year" ltr inputMode="numeric" maxLength={4} placeholder="1984" value={parts.y} onChange={(e) => setPart('y', e.target.value)} />
         </div>
         {errors.birthDate && (
           <p role="alert" className={styles.error}>
