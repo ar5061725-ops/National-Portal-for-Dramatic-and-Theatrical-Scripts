@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getInvoiceStatus } from '@/lib/payment/myfatoorah';
+import { isKnownPendingInvoice } from '@/lib/payment/reconcile';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,6 +47,9 @@ export async function POST(req: Request) {
   const data = body.Data ?? {};
   const invoiceId = data?.Invoice?.Id ?? data?.InvoiceId;
   if (!invoiceId) return NextResponse.json({ error: 'missing_invoice_id' }, { status: 400 });
+
+  // لا نستدعي المزوّد (بمفتاحنا) إلا لفاتورة معلّقة نعرفها؛ يمنع استغلال الويبهوك لاستنزاف حصة الاتصال
+  if (!(await isKnownPendingInvoice(String(invoiceId)))) return NextResponse.json({ ignored: true });
 
   let invoice;
   try {

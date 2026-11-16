@@ -73,6 +73,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // يستثني ملفات Next الثابتة وأي ملف بامتداد وواجهات /api (لكل منها تحققها الخاص)
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/|.*\\..*).*)'],
+  // يستثني ملفات Next الثابتة وملفات public المعروفة بأسمائها وواجهات /api (لكل منها تحققها الخاص).
+  // لا نستثني «أي مسار فيه نقطة»: مقاطع المسار الديناميكية (مثل /certificates/x.y) كانت ستتجاوز بوابة الدخول.
+  matcher: ['/((?!_next/static|_next/image|favicon\\.ico$|logo\\.png$|learning/series-engineering\\.pdf$|api/).*)'],
 };

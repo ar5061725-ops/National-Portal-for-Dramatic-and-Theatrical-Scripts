@@ -1,6 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 import { getInvoiceStatus } from './myfatoorah';
 
+/** هل الفاتورة تخص محاولة دفع معلّقة لدينا؟ */
+export async function isKnownPendingInvoice(invoiceId: string): Promise<boolean> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceKey || !/^\d{1,20}$/.test(invoiceId)) return false;
+  const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
+  const { data } = await admin.rpc('list_pending_payment_attempts', { p_submission_ids: null, p_limit: 200 });
+  return ((data ?? []) as { provider_invoice_id: string }[]).some((r) => r.provider_invoice_id === invoiceId);
+}
+
 /**
  * تسوية الدفعات المعلّقة بلا ويبهوك: نسأل MyFatoorah مباشرة (بمفتاح الخادم) عن حالة كل فاتورة معلّقة
  * ثم نثبّتها بـ apply_payment_event (آمن للتكرار: المفتاح والمبلغ تحميهما القاعدة).

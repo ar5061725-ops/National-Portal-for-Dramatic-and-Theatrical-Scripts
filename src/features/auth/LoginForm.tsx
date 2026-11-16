@@ -33,6 +33,17 @@ const COPY: Record<Mode, { heading: string; subheading: string }> = {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/** مسار داخلي فقط (يمنع إعادة التوجيه المفتوحة: //evil.com و/\evil.com وhttp://… وrjavascript:). */
+function isSafeInternalPath(value: string | null): value is string {
+  if (!value || !value.startsWith('/') || value.startsWith('//') || value.includes('\\')) return false;
+  if (/[\u0000-\u001f\s]/.test(value)) return false;
+  try {
+    return new URL(value, window.location.origin).origin === window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
 export function LoginForm({ variant = 'author' }: { variant?: 'author' | 'committee' }) {
   const isCommittee = variant === 'committee';
   const router = useRouter();
@@ -105,7 +116,7 @@ export function LoginForm({ variant = 'author' }: { variant?: 'author' | 'commit
     if (!succeeded) return;
     // وجهة العودة بعد الدخول (من ?next=) مع قبول المسارات الداخلية فقط لمنع التحويل لمواقع خارجية
     const next = new URLSearchParams(window.location.search).get('next');
-    router.replace(next && next.startsWith('/') && !next.startsWith('//') ? next : isCommittee ? ROUTES.committee : ROUTES.newSubmission);
+    router.replace(isSafeInternalPath(next) ? next : isCommittee ? ROUTES.committee : ROUTES.newSubmission);
     router.refresh();
   }, [succeeded, router, isCommittee]);
 

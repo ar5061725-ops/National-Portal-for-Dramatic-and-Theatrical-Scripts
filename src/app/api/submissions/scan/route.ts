@@ -15,6 +15,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * عند الإطلاق، فمكانه عامل فحص مخصص.
  */
 export async function POST(req: Request) {
+  // دفاع إضافي ضد CSRF: الطلب يجب أن يأتي من صفحاتنا نفسها
+  const origin = req.headers.get('origin');
+  if (origin && new URL(origin).host !== new URL(req.url).host) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+
   const body = (await req.json().catch(() => null)) as { versionId?: string } | null;
   if (!body?.versionId || !UUID.test(body.versionId)) return NextResponse.json({ error: 'طلب غير صالح' }, { status: 400 });
 
