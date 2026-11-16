@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { confirmPaymentOnReturn } from '@/lib/payment/confirm';
+import { reconcilePendingPayments } from '@/lib/payment/reconcile';
 import { getPaidResult, getPayableRequest } from '@/lib/api/requests.server';
 import { PaymentFlow } from '@/features/payment/PaymentFlow';
 
@@ -18,6 +19,10 @@ export default async function PaymentPage({
 
   // العودة من صفحة المزوّد: نؤكد النتيجة من المزوّد نفسه قبل عرض أي حالة
   const returnOutcome = paymentId ? await confirmPaymentOnReturn(id, paymentId) : null;
+
+  // دفعة معلّقة لهذا الطلب؟ نسوّيها من المزوّد قبل العرض (بدل انتظار الويبهوك)
+  const pending = await getPayableRequest(id);
+  if (pending?.submissionId) await reconcilePendingPayments([pending.submissionId]);
 
   const [paid, serverSummary] = await Promise.all([getPaidResult(id), getPayableRequest(id)]);
   return <PaymentFlow requestId={id} serverSummary={serverSummary} paid={paid} returnFailed={returnOutcome === 'failed'} />;

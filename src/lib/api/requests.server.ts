@@ -1,5 +1,6 @@
 import { WORK_TYPES } from '@/config/submission';
 import { getServerSupabase } from '@/lib/supabase/server';
+import { reconcilePendingPayments } from '@/lib/payment/reconcile';
 import type { FeedbackThread, PaidResult, PayableRequest, RequestStatus, ScriptRequest } from '@/types';
 import { ApiError } from './client';
 
@@ -83,8 +84,19 @@ export async function getMyRequests(): Promise<ScriptRequest[]> {
     .eq('author_id', userId)
     .order('updated_at', { ascending: false });
   if (error) throw new ApiError('تعذّر تحميل طلباتك', 500);
-  const rows = (subs ?? []) as SubmissionRow[];
+  let rows = (subs ?? []) as SubmissionRow[];
   if (rows.length === 0) return [];
+
+  // تسوية دفعات هذا المؤلف المعلّقة قبل العرض (بديل الويبهوك إن أغلق المستخدم صفحة الدفع)
+  const awaiting = rows.filter((r) => r.status === 'awaiting_payment').map((r) => r.id);
+  if (awaiting.length > 0 && (await reconcilePendingPayments(awaiting)) > 0) {
+    const { data: fresh } = await supabase
+      .from('submissions')
+      .select('id, public_no, status, current_version_id')
+      .eq('author_id', userId)
+      .order('updated_at', { ascending: false });
+    rows = (fresh ?? rows) as SubmissionRow[];
+  }
 
   const versionIds = rows.map((r) => r.current_version_id).filter((v): v is string => Boolean(v));
   const { data: versions } = await supabase
