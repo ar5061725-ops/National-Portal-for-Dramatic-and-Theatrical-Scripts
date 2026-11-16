@@ -1,4 +1,6 @@
 import type { AuthError } from '@supabase/supabase-js';
+import { toIdentityPayload } from '@/lib/identity';
+import type { IdentityValues } from '@/lib/identity';
 import { getSupabase } from '@/lib/supabase/client';
 import { ApiError, wait } from './client';
 
@@ -12,6 +14,7 @@ export interface RegisterInput {
   phone: string;
   email: string;
   password: string;
+  identity: IdentityValues;
 }
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -27,6 +30,9 @@ function toApiError(error: AuthError): ApiError {
     return new ApiError('محاولات كثيرة؛ انتظر قليلاً ثم أعد المحاولة', 429);
   }
   if (code === 'user_already_exists' || code === 'email_exists') return new ApiError('هذا البريد مسجَّل مسبقاً، سجّل الدخول', 409);
+  if (code === 'unexpected_failure' && /database error saving new user/i.test(error.message)) {
+    return new ApiError('تعذّر إنشاء الحساب: راجع بيانات البطاقة المدنية، أو أن الرقم المدني مسجَّل بحساب آخر', 422);
+  }
   if (error.name === 'AuthRetryableFetchError' || status === 0) return new ApiError(`تعذّر الاتصال بالخادم، تحقق من الإنترنت وأعد المحاولة (${error.message.slice(0, 80)})`, 503);
   if (code === 'email_address_not_authorized') return new ApiError('هذا البريد غير مسموح له بالاستلام بعد؛ فعّل بريد SMTP المخصص للمشروع', 403);
   if (code === 'signup_disabled') return new ApiError('التسجيل معطّل مؤقتاً', 403);
@@ -52,13 +58,26 @@ export async function register(input: RegisterInput): Promise<void> {
     email,
     password: input.password,
     options: {
-      data: { full_name: input.name.trim(), phone: input.phone.trim() },
+      // بيانات الهوية تنتقل إلى جدول مغلق عند إنشاء الحساب وتُمسح من بيانات حساب Auth
+      data: { full_name: input.name.trim(), phone: input.phone.trim(), ...toIdentityPayload(input.identity) },
       emailRedirectTo: `${window.location.origin}/login`,
     },
   });
   if (error) throw toApiError(error);
   // بريد مسجَّل ومؤكَّد: يعيد Supabase مستخدماً بلا هويات (لإخفاء وجود الحساب)
   if (data.user && data.user.identities?.length === 0) throw new ApiError('هذا البريد مسجَّل مسبقاً، سجّل الدخول', 409);
+}
+
+/** استكمال بيانات الهوية لحساب قائم (مرة واحدة). */
+export async function saveMyIdentity(identity: IdentityValues): Promise<void> {
+  const { error } = await getSupabase().rpc('save_my_identity', { p: toIdentityPayload(identity) });
+  if (!error) return;
+  if (error.message.includes('identity_exists')) throw new ApiError('بياناتك محفوظة مسبقاً', 409);
+  if (error.message.includes('invalid_civil_id') || error.message.includes('invalid_birth_date')) {
+    throw new ApiError('الرقم المدني لا يطابق تاريخ الميلاد؛ راجع البطاقة', 422);
+  }
+  if (error.code === '23505') throw new ApiError('هذا الرقم المدني مسجَّل بحساب آخر', 409);
+  throw new ApiError('تعذّر حفظ البيانات، راجع الحقول وأعد المحاولة', 422);
 }
 
 export async function resendConfirmation(email: string): Promise<void> {

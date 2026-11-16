@@ -1,20 +1,26 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-/** صفحات تتطلب تسجيل دخول. الباقي (الرئيسية، المعتمدة، التحقق، الدليل…) مفتوح للزوار. */
-const PROTECTED_PREFIXES = ['/submissions', '/payments', '/receipts', '/account', '/notifications', '/certificates', '/committee'];
+/**
+ * بوّابة الدخول لكل الموقع: لا يُتصفَّح شيء قبل تسجيل الدخول، عدا الصفحات الآتية.
+ * التحقق من الشهادة (/verify) يبقى عاماً لأن الجهات الخارجية تستخدمه، وواجهات /api تتحقق من الهوية بنفسها.
+ */
+const PUBLIC_EXACT = new Set(['/', '/login', '/committee/login']);
+const PUBLIC_PREFIXES = ['/verify/'];
 
-/** أدوار لوحة اللجنة: المراجع للوحة، والمشرف لشاشة القرار. */
-const COMMITTEE_MANAGER_ONLY = '/committee/decisions';
+const IDENTITY_PATH = '/account/identity';
 
-function isProtected(pathname: string): boolean {
-  return PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+function isPublic(pathname: string): boolean {
+  return PUBLIC_EXACT.has(pathname) || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
+function isCommitteePath(pathname: string): boolean {
+  return pathname === '/committee' || pathname.startsWith('/committee/');
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  if (!isProtected(pathname) || pathname === '/committee/login') return NextResponse.next();
-  const loginPath = pathname === '/committee' || pathname.startsWith('/committee/') ? '/committee/login' : '/login';
+  if (isPublic(pathname)) return NextResponse.next();
 
   let response = NextResponse.next({ request });
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
@@ -32,18 +38,32 @@ export async function middleware(request: NextRequest) {
   const { data } = await supabase.auth.getUser();
   if (!data.user) {
     const url = request.nextUrl.clone();
-    url.pathname = loginPath;
+    url.pathname = isCommitteePath(pathname) ? '/committee/login' : '/login';
     url.search = `?next=${encodeURIComponent(pathname + request.nextUrl.search)}`;
     return NextResponse.redirect(url);
   }
 
-  if (pathname === '/committee' || pathname.startsWith('/committee/')) {
-    const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', data.user.id).is('revoked_at', null);
-    const held = new Set((roles ?? []).map((r) => r.role as string));
-    const allowed = pathname.startsWith(COMMITTEE_MANAGER_ONLY) ? held.has('committee_manager') : held.has('reviewer') || held.has('committee_manager');
+  const { data: roleRows } = await supabase.from('user_roles').select('role').eq('user_id', data.user.id).is('revoked_at', null);
+  const held = new Set((roleRows ?? []).map((r) => r.role as string));
+  const isStaff = held.has('reviewer') || held.has('committee_manager');
+
+  if (isCommitteePath(pathname)) {
+    const allowed = pathname.startsWith('/committee/decisions') ? held.has('committee_manager') : isStaff;
     if (!allowed) {
       const url = request.nextUrl.clone();
       url.pathname = '/home';
+      url.search = '';
+      return NextResponse.redirect(url);
+    }
+    return response;
+  }
+
+  // المؤلف لا يتصفح قبل حفظ بيانات بطاقته المدنية (أعضاء اللجنة معفون)
+  if (!isStaff && pathname !== IDENTITY_PATH) {
+    const { count } = await supabase.from('author_identity').select('user_id', { count: 'exact', head: true }).eq('user_id', data.user.id);
+    if (!count) {
+      const url = request.nextUrl.clone();
+      url.pathname = IDENTITY_PATH;
       url.search = '';
       return NextResponse.redirect(url);
     }
@@ -53,5 +73,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/submissions/:path*', '/payments/:path*', '/receipts/:path*', '/account/:path*', '/notifications/:path*', '/certificates/:path*', '/committee/:path*'],
+  // يستثني ملفات Next الثابتة وأي ملف بامتداد وواجهات /api (لكل منها تحققها الخاص)
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/|.*\\..*).*)'],
 };

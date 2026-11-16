@@ -18,6 +18,9 @@ import { StatePanel } from '@/components/ui/StatePanel';
 import { Logo } from '@/components/ui/Logo';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { TextField } from '@/components/ui/TextField';
+import { EMPTY_IDENTITY, validateIdentity } from '@/lib/identity';
+import type { IdentityErrors, IdentityValues } from '@/lib/identity';
+import { IdentityFields } from './IdentityFields';
 import styles from './LoginForm.module.css';
 
 type Mode = 'login' | 'register';
@@ -37,6 +40,9 @@ export function LoginForm({ variant = 'author' }: { variant?: 'author' | 'commit
   const [mode, setMode] = useState<Mode>('login');
   const [errors, setErrors] = useState<Errors>({});
   const [values, setValues] = useState({ identifier: '', password: '', name: '', phone: '', email: '' });
+  const [identity, setIdentity] = useState<IdentityValues>(EMPTY_IDENTITY);
+  const [identityErrors, setIdentityErrors] = useState<IdentityErrors>({});
+  const [confirmed, setConfirmed] = useState(false);
 
   const loginAction = useAsyncAction(login);
   const registerAction = useAsyncAction(register);
@@ -69,12 +75,14 @@ export function LoginForm({ variant = 'author' }: { variant?: 'author' | 'commit
     event.preventDefault();
     const next = validate();
     setErrors(next);
-    if (Object.keys(next).length > 0) return;
+    const identityProblems = mode === 'register' ? validateIdentity(identity, confirmed) : {};
+    setIdentityErrors(identityProblems);
+    if (Object.keys(next).length > 0 || Object.keys(identityProblems).length > 0) return;
 
     if (mode === 'login') {
       await loginAction.run({ identifier: values.identifier, password: values.password });
     } else {
-      await registerAction.run({ name: values.name, phone: values.phone, email: values.email, password: values.password });
+      await registerAction.run({ name: values.name, phone: values.phone, email: values.email, password: values.password, identity });
     }
   }
 
@@ -185,6 +193,19 @@ export function LoginForm({ variant = 'author' }: { variant?: 'author' | 'commit
               <TextField label="رقم الهاتف" type="tel" ltr placeholder="+965" autoComplete="tel" value={values.phone} error={errors.phone} onChange={(e) => set('phone')(e.target.value)} />
               <TextField label="البريد الإلكتروني" type="email" ltr placeholder="name@example.com" autoComplete="email" value={values.email} error={errors.email} onChange={(e) => set('email')(e.target.value)} />
               <TextField label="كلمة المرور" type="password" placeholder="8 أحرف على الأقل" autoComplete="new-password" value={values.password} error={errors.password} onChange={(e) => set('password')(e.target.value)} />
+              <IdentityFields
+                values={identity}
+                errors={identityErrors}
+                confirmed={confirmed}
+                onChange={(key, value) => {
+                  setIdentity((v) => ({ ...v, [key]: value }));
+                  setIdentityErrors((e) => ({ ...e, [key]: undefined }));
+                }}
+                onConfirm={(value) => {
+                  setConfirmed(value);
+                  setIdentityErrors((e) => ({ ...e, confirmed: undefined }));
+                }}
+              />
             </>
           )}
 
