@@ -60,7 +60,7 @@ export async function register(input: RegisterInput): Promise<void> {
     options: {
       // بيانات الهوية تنتقل إلى جدول مغلق عند إنشاء الحساب وتُمسح من بيانات حساب Auth
       data: { full_name: input.name.trim(), phone: input.phone.trim(), ...toIdentityPayload(input.identity) },
-      emailRedirectTo: `${window.location.origin}/login`,
+      emailRedirectTo: `${window.location.origin}/login?confirmed=1`,
     },
   });
   if (error) throw toApiError(error);
@@ -84,7 +84,7 @@ export async function resendConfirmation(email: string): Promise<void> {
   const { error } = await getSupabase().auth.resend({
     type: 'signup',
     email: email.trim(),
-    options: { emailRedirectTo: `${window.location.origin}/login` },
+    options: { emailRedirectTo: `${window.location.origin}/login?confirmed=1` },
   });
   if (error) throw toApiError(error);
 }

@@ -124,6 +124,8 @@ export function LoginForm({ variant = 'author' }: { variant?: 'author' | 'commit
     const params = new URLSearchParams(window.location.search);
     if (!isCommittee && params.get('mode') === 'register') setMode('register');
     if (params.get('reset') === 'done') showToast('تم تغيير كلمة المرور، سجّل الدخول بها');
+    if (params.get('confirmed') === '1') showToast('تم تأكيد بريدك الإلكتروني، سجّل الدخول للمتابعة');
+    if (params.get('error') === 'link') showToast('الرابط غير صالح أو انتهت صلاحيته، اطلب رابطاً جديداً');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCommittee]);
 

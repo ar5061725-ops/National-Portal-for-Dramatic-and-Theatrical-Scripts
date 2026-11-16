@@ -6,7 +6,7 @@ import { NextResponse, type NextRequest } from 'next/server';
  * التحقق من الشهادة (/verify) يبقى عاماً لأن الجهات الخارجية تستخدمه، وواجهات /api تتحقق من الهوية بنفسها.
  */
 const PUBLIC_EXACT = new Set(['/', '/login', '/committee/login', '/reset-password']);
-const PUBLIC_PREFIXES = ['/verify/'];
+const PUBLIC_PREFIXES = ['/verify/', '/auth/'];
 
 const IDENTITY_PATH = '/account/identity';
 
