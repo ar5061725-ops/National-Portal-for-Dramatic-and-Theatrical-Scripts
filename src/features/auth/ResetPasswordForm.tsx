@@ -9,10 +9,12 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { PageBody } from '@/components/layout/PageBody';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button, ButtonLink } from '@/components/ui/Button';
+import { Form } from '@/components/ui/Form';
+import { FormError } from '@/components/ui/FormError';
 import { Logo } from '@/components/ui/Logo';
 import { StatePanel } from '@/components/ui/StatePanel';
 import { TextField } from '@/components/ui/TextField';
-import styles from './LoginForm.module.css';
+
 
 type LinkState = 'checking' | 'valid' | 'invalid';
 
@@ -70,18 +72,14 @@ export function ResetPasswordForm() {
           </StatePanel>
         )}
         {state === 'valid' && (
-          <form className={styles.form} onSubmit={handleSubmit} noValidate>
+          <Form onSubmit={handleSubmit}>
             <TextField label="كلمة المرور الجديدة" type="password" autoComplete="new-password" placeholder="8 أحرف على الأقل" value={password} onChange={(e) => setPassword(e.target.value)} />
             <TextField label="تأكيد كلمة المرور" type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
-            {(error || save.isError) && (
-              <p role="alert" className={styles.formError}>
-                {error ?? save.error}
-              </p>
-            )}
+            <FormError>{error ?? (save.isError ? save.error : undefined)}</FormError>
             <Button type="submit" size="lg" block loading={save.isLoading} disabled={save.isSuccess}>
               حفظ كلمة المرور
             </Button>
-          </form>
+          </Form>
         )}
       </PageBody>
     </>

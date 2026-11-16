@@ -11,9 +11,11 @@ import type { UserAccount } from '@/types';
 import { PageBody } from '@/components/layout/PageBody';
 import { BackButton, PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
+import { Form } from '@/components/ui/Form';
+import { FormError } from '@/components/ui/FormError';
 import { Logo } from '@/components/ui/Logo';
 import { TextField } from '@/components/ui/TextField';
-import styles from '@/features/auth/LoginForm.module.css';
+
 
 /** تعديل الاسم والهاتف. البريد والرقم المدني وبيانات البطاقة للقراءة فقط (تعديلها عبر الدعم). */
 export function EditProfileForm({ user }: { user: UserAccount }) {
@@ -39,19 +41,15 @@ export function EditProfileForm({ user }: { user: UserAccount }) {
     <>
       <PageHeader rounded start={<BackButton href={ROUTES.account} />} end={<Logo size={52} />} title="تعديل البيانات" subtitle="الاسم ورقم الهاتف" />
       <PageBody gap={18}>
-        <form className={styles.form} onSubmit={handleSubmit} noValidate>
+        <Form onSubmit={handleSubmit}>
           <TextField label="الاسم الكامل" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
           <TextField label="رقم الهاتف" type="tel" ltr autoComplete="tel" placeholder="97900000 أو +965…" value={phone} onChange={(e) => setPhone(e.target.value)} />
           <TextField label="البريد الإلكتروني" ltr value={user.email} readOnly disabled hint="لا يمكن تغييره من هنا" />
-          {save.isError && (
-            <p role="alert" className={styles.formError}>
-              {save.error}
-            </p>
-          )}
+          <FormError>{save.isError ? save.error : undefined}</FormError>
           <Button type="submit" size="lg" block loading={save.isLoading} disabled={save.isSuccess}>
             حفظ التعديلات
           </Button>
-        </form>
+        </Form>
       </PageBody>
     </>
   );

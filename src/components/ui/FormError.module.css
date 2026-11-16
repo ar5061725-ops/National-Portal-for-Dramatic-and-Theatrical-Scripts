@@ -1,0 +1,10 @@
+.error {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--danger-ink);
+}

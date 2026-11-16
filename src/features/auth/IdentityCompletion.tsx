@@ -11,9 +11,11 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { PageBody } from '@/components/layout/PageBody';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
+import { Form } from '@/components/ui/Form';
+import { FormError } from '@/components/ui/FormError';
 import { Logo } from '@/components/ui/Logo';
 import { IdentityFields } from './IdentityFields';
-import styles from './LoginForm.module.css';
+
 
 /** شاشة إلزامية لمن لم تُحفظ بيانات بطاقته بعد؛ لا يتصفح الموقع قبل إكمالها. */
 export function IdentityCompletion() {
@@ -41,7 +43,7 @@ export function IdentityCompletion() {
     <>
       <PageHeader rounded end={<Logo size={52} />} title="استكمال بيانات الهوية" subtitle="مطلوبة مرة واحدة قبل متابعة استخدام البوابة" />
       <PageBody gap={18}>
-        <form className={styles.form} onSubmit={handleSubmit} noValidate>
+        <Form onSubmit={handleSubmit}>
           <IdentityFields
             values={identity}
             errors={errors}
@@ -55,15 +57,11 @@ export function IdentityCompletion() {
               setErrors((e) => ({ ...e, confirmed: undefined }));
             }}
           />
-          {save.isError && (
-            <p role="alert" className={styles.formError}>
-              {save.error}
-            </p>
-          )}
+          <FormError>{save.isError ? save.error : undefined}</FormError>
           <Button type="submit" size="lg" block loading={save.isLoading} disabled={save.isSuccess}>
             حفظ البيانات والمتابعة
           </Button>
-        </form>
+        </Form>
       </PageBody>
     </>
   );

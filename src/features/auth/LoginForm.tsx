@@ -17,6 +17,8 @@ import { Icon } from '@/components/ui/Icon';
 import { StatePanel } from '@/components/ui/StatePanel';
 import { Logo } from '@/components/ui/Logo';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { Form } from '@/components/ui/Form';
+import { FormError } from '@/components/ui/FormError';
 import { TextField } from '@/components/ui/TextField';
 import { EMPTY_IDENTITY, validateIdentity } from '@/lib/identity';
 import type { IdentityErrors, IdentityValues } from '@/lib/identity';
@@ -43,6 +45,8 @@ export function LoginForm({ variant = 'author' }: { variant?: 'author' | 'commit
   const [identity, setIdentity] = useState<IdentityValues>(EMPTY_IDENTITY);
   const [identityErrors, setIdentityErrors] = useState<IdentityErrors>({});
   const [confirmed, setConfirmed] = useState(false);
+  const [resetCooldown, setResetCooldown] = useState(0);
+  const [resetLoading, setResetLoading] = useState(false);
 
   const loginAction = useAsyncAction(login);
   const registerAction = useAsyncAction(register);
@@ -94,6 +98,26 @@ export function LoginForm({ variant = 'author' }: { variant?: 'author' | 'commit
       showToast(getErrorMessage(error));
     }
   }
+
+  /** استعادة كلمة المرور: تأكيد واضح للمستخدم + مهلة 60 ثانية (حد المزوّد) لمنع تكرار الطلب. */
+  async function handleForgotPassword() {
+    setResetLoading(true);
+    try {
+      await requestPasswordReset(values.identifier);
+      showToast(`إن كان ${values.identifier.trim()} مسجَّلاً فستصلك رسالة بالرابط. تحقق من البريد والرسائل غير المرغوبة.`);
+      setResetCooldown(60);
+    } catch (error) {
+      showToast(getErrorMessage(error));
+    } finally {
+      setResetLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (resetCooldown <= 0) return;
+    const timer = setTimeout(() => setResetCooldown((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resetCooldown]);
 
   // الرابط /login?mode=register (من صفحة البداية) يفتح تبويب التسجيل مباشرة
   useEffect(() => {
@@ -170,7 +194,7 @@ export function LoginForm({ variant = 'author' }: { variant?: 'author' | 'commit
           ]}
         />}
 
-        <form className={styles.form} onSubmit={handleSubmit} noValidate>
+        <Form onSubmit={handleSubmit}>
           {mode === 'login' ? (
             <>
               <TextField
@@ -190,8 +214,8 @@ export function LoginForm({ variant = 'author' }: { variant?: 'author' | 'commit
                 error={errors.password}
                 onChange={(e) => set('password')(e.target.value)}
               />
-              <button type="button" className={styles.textLink} onClick={() => void runWithToast(() => requestPasswordReset(values.identifier), MESSAGES.forgotPassword)}>
-                نسيت كلمة المرور؟
+              <button type="button" className={styles.textLink} disabled={resetCooldown > 0 || resetLoading} onClick={() => void handleForgotPassword()}>
+                {resetCooldown > 0 ? `أعد الطلب بعد ${resetCooldown} ثانية` : 'نسيت كلمة المرور؟'}
               </button>
             </>
           ) : (
@@ -216,16 +240,12 @@ export function LoginForm({ variant = 'author' }: { variant?: 'author' | 'commit
             </>
           )}
 
-          {active.isError && (
-            <p role="alert" className={styles.formError}>
-              {active.error}
-            </p>
-          )}
+          <FormError>{active.isError ? active.error : undefined}</FormError>
 
           <Button type="submit" size="lg" block loading={active.isLoading} disabled={busy}>
             {mode === 'login' ? 'دخول' : 'إنشاء الحساب والمتابعة'}
           </Button>
-        </form>
+        </Form>
 
         {mode === 'login' && !isCommittee && (
           <>
@@ -238,11 +258,7 @@ export function LoginForm({ variant = 'author' }: { variant?: 'author' | 'commit
               <Icon name="idCard" size={20} />
               الدخول عبر الهوية الرقمية
             </Button>
-            {digitalIdAction.isError && (
-              <p role="alert" className={styles.formError}>
-                {digitalIdAction.error}
-              </p>
-            )}
+            <FormError>{digitalIdAction.isError ? digitalIdAction.error : undefined}</FormError>
           </>
         )}
 
