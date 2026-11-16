@@ -95,6 +95,11 @@ export function LoginForm({ variant = 'author' }: { variant?: 'author' | 'commit
     }
   }
 
+  // الرابط /login?mode=register (من صفحة البداية) يفتح تبويب التسجيل مباشرة
+  useEffect(() => {
+    if (!isCommittee && new URLSearchParams(window.location.search).get('mode') === 'register') setMode('register');
+  }, [isCommittee]);
+
   // التوجيه بعد النجاح يعتمد على الحالة (الدوال لا تعيد قيمة)
   useEffect(() => {
     if (!succeeded) return;

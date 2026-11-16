@@ -71,6 +71,66 @@
   background: #fff;
 }
 
+.lead {
+  max-width: 340px;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #e6eff9;
+}
+
+.steps {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 420px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.stepNo {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.stepText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #dde9f6;
+}
+
+.stepText b {
+  font-size: 15px;
+  color: #fff;
+}
+
+.committee {
+  font-size: 13px;
+  color: #dde9f6;
+  text-decoration: underline;
+}
+
 .actions {
   position: relative;
   display: flex;
