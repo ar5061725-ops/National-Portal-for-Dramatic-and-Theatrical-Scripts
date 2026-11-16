@@ -38,8 +38,9 @@ export async function middleware(request: NextRequest) {
   const { data } = await supabase.auth.getUser();
   if (!data.user) {
     const url = request.nextUrl.clone();
-    url.pathname = isCommitteePath(pathname) ? '/committee/login' : '/login';
-    url.search = `?next=${encodeURIComponent(pathname + request.nextUrl.search)}`;
+    // التسلسل: البداية ← التسجيل/الدخول ← الرئيسية. غير المسجَّل يُعاد إلى صفحة البداية (وللجنة إلى دخولها)
+    url.pathname = isCommitteePath(pathname) ? '/committee/login' : '/';
+    url.search = '';
     return NextResponse.redirect(url);
   }
 

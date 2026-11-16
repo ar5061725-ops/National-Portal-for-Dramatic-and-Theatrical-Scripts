@@ -13,7 +13,7 @@ export function LogoutButton() {
 
   async function handleClick() {
     await action.run();
-    router.replace(ROUTES.login);
+    router.replace(ROUTES.splash);
     router.refresh();
   }
 
