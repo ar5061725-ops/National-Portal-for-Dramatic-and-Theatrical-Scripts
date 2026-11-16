@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
   const { data: attached, error: attachError } = await admin.rpc('attach_provider_invoice', {
     p_attempt_id: reserved.attempt_id,
     p_invoice_id: String(result.Data.InvoiceId),
-    p_payment_url: result.Data.InvoiceURL,
+    p_payment_url: new URL(result.Data.InvoiceURL).href, // المزوّد يعيد المضيف بأحرف كبيرة (MyFatoorah.com)، والقاعدة تشترط الصغيرة
     p_expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
   });
   if (attachError || attached?.error) return json({ state: 'verifying', message: 'جارٍ التحقق من الدفع' }, 202, origin);
