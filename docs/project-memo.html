@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>مذكرة تنفيذ المشروع</title>
+<style>
+@page { size: A4; margin: 16mm 14mm; }
+body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color:#1b2a3a; line-height:1.85; font-size:12.5px; }
+h1 { color:#fff; background:#0f4c81; padding:18px 20px; border-radius:10px; font-size:22px; margin:0 0 6px; }
+.sub { color:#556; margin:0 0 18px; }
+h2 { color:#0f4c81; border-bottom:2px solid #0f4c81; padding-bottom:4px; margin:22px 0 8px; font-size:16px; page-break-after:avoid; }
+h3 { color:#1d6fa8; margin:12px 0 4px; font-size:13.5px; }
+ul,ol { margin:4px 0 8px; padding-inline-start:22px; }
+li { margin:2px 0; }
+code { direction:ltr; unicode-bidi:embed; background:#eef3f8; padding:0 4px; border-radius:3px; font-size:11px; }
+table { border-collapse:collapse; width:100%; margin:6px 0 10px; }
+th,td { border:1px solid #c9d6e2; padding:5px 8px; text-align:right; vertical-align:top; }
+th { background:#e6eef6; }
+.ok { color:#1a7f37; font-weight:bold; }
+.todo { color:#b45309; font-weight:bold; }
+.box { background:#f4f8fb; border:1px solid #c9d6e2; border-radius:8px; padding:8px 12px; margin:8px 0; }
+</style>
+</head>
+<body>
+<h1>مذكرة التنفيذ: البوابة الوطنية للنصوص الدرامية والمسرحية</h1>
+<p class="sub">وزارة الإعلام – دولة الكويت · من تحويل الواجهة (HTML) إلى Next.js حتى آخر تعديل · التاريخ: 16 نوفمبر 2026</p>
+
+<div class="box">
+<b>المستودع:</b> <code>ar5061725-ops/National-Portal-for-Dramatic-and-Theatrical-Scripts</code> (فرع main) ·
+<b>الموقع:</b> <code>https://national-scripts-portal.vercel.app</code> ·
+<b>قاعدة البيانات:</b> Supabase مشروع <code>national-scripts-portal-dev</code>
+</div>
+
+<h2>1. المرحلة الأولى: التحويل من HTML إلى Next.js</h2>
+<ol>
+<li>تحويل شاشات التصميم الثابتة إلى تطبيق <b>Next.js 15 (App Router) + React 19 + TypeScript</b>، بواجهة عربية من اليمين لليسار تُصمَّم للجوال أولاً.</li>
+<li>اعتماد <b>CSS Modules</b> وألوان وهيكل التصميم المعتمد في المستند المرجعي.</li>
+<li>بناء مكوّنات قابلة لإعادة الاستخدام: <code>Button</code>, <code>TextField</code>, <code>Card</code>, <code>StatePanel</code>, <code>SegmentedControl</code>, <code>PageHeader</code>, <code>PageBody</code>, <code>BottomNav</code>, <code>Form</code>, <code>FormError</code>.</li>
+<li>تنظيم المسارات بمجموعات: <code>(tabs)</code> للتبويبات السفلية، <code>(flow)</code> لمسارات الخطوات (تقديم، دفع)، <code>(print)</code> للطباعة والتحقق.</li>
+<li>الاعتماد على مكوّنات الخادم مع «جزر» عميل صغيرة، وخطاف <code>useAsyncAction</code> لحالات التحميل والنجاح والخطأ بشكل موحّد.</li>
+<li>إنشاء طبقة <code>src/lib/api</code> لعزل منطق الاتصال عن الواجهات (قابلية التوسع والصيانة).</li>
+</ol>
+
+<h2>2. الواجهة وتدفق الاستخدام</h2>
+<ol>
+<li><b>صفحة بداية</b> (Splash) قبل التسجيل: تعريف بالبوابة وثلاث خطوات (أنشئ حسابك، قدّم نصك، تابع التقييم) وزر تسجيل الدخول.</li>
+<li><b>تسجيل الدخول / إنشاء حساب</b> بتبويبين، مع حقول الهوية (الرقم المدني، تاريخ الميلاد…) ودليل إرشادي إلزامي قبل المتابعة.</li>
+<li>تدفق الدخول: بداية ← تسجيل ← الرئيسية. <b>الموقع كله يتطلب تسجيل الدخول</b> ويظهر الشريط السفلي بعده.</li>
+<li><b>دخول اللجنة منفصل</b> (<code>/committee/login</code>) ولا يوجد تسجيل ذاتي للمراجعين.</li>
+<li>إصلاح تاريخ الميلاد: الحقل الأصلي كان يعرض نصاً عربياً معكوساً، فاستُبدل بثلاثة حقول رقمية (يوم/شهر/سنة).</li>
+<li>إصلاح عرض الاسم الكامل المقصوص (دالة <code>rpad</code> كانت تقتطع الاسم إلى حرفين) بترحيل قاعدة بيانات وإصلاح البيانات القائمة.</li>
+</ol>
+
+<h2>3. الخلفية: Supabase</h2>
+<ol>
+<li>إنشاء المشروع وجداول المؤلفين والطلبات والملفات والتقييمات والإشعارات مع <b>سياسات أمان الصفوف (RLS)</b>.</li>
+<li>دوال RPC بصيغة <code>SECURITY DEFINER</code> مع <code>search_path=''</code>، ومخطط <code>app_private</code> للجداول الداخلية.</li>
+<li>أدوار المستخدمين: <code>author</code> و<code>reviewer</code> و<code>committee_manager</code>.</li>
+<li>جدول <code>author_identity</code> لحفظ بيانات البطاقة المدنية في جدول مغلق، وبوابة هوية تُلزم باستكمال البيانات (<code>/account/identity</code>).</li>
+<li>سلال التخزين (<code>submissions-portal</code> وغيرها) لرفع ملفات النصوص بصيغة PDF.</li>
+<li>مهام مجدولة: <code>pg_cron</code> و<code>pg_net</code> لتسوية المدفوعات كل دقيقتين.</li>
+<li>ترحيلات قاعدة البيانات <code>20261115000007</code> إلى <code>…14</code>: جولات التقييم، أنواع النصوص، هوية المؤلف، بحث الدفع والرسوم، محاولات الدفع المعلّقة، إصلاح اقتطاع الأسماء، قوائم المشرف، منع إعادة الإسناد بعد التعارض.</li>
+</ol>
+
+<h2>4. المصادقة والحماية</h2>
+<ol>
+<li>عميل <code>@supabase/ssr</code> بملفات الارتباط، مع <b>middleware</b> يحجب الصفحات غير العامة ويتحقق من الأدوار وبوابة الهوية.</li>
+<li>الصفحات العامة فقط: <code>/</code> و<code>/login</code> و<code>/committee/login</code> و<code>/reset-password</code> و<code>/verify/*</code> و<code>/auth/*</code>.</li>
+<li><b>ثغرة وُجدت وأُصلحت:</b> المطابِق كان يستثني أي مسار فيه نقطة فيمكن تجاوز الحماية (مثل <code>/submissions/new.x</code>)، فضُيِّق المطابِق.</li>
+<li>مسار <code>/auth/confirm</code> يستقبل <code>token_hash</code> فتعمل روابط البريد من أي جهاز (استعادة كلمة المرور تفتح صفحة التعيين، والتأكيد يعيد لتسجيل الدخول).</li>
+<li>استعادة كلمة المرور: مهلة 60 ثانية لمنع التكرار، ورسائل خطأ عربية واضحة، وشاشة تعيين كلمة جديدة (<code>ResetPasswordForm</code>).</li>
+<li>قوالب بريد عربية (<code>supabase/email-templates</code>) وإرسال عبر <b>Resend SMTP</b>. وضع الاختبار يرسل فقط إلى بريد صاحب الحساب، ويلزم توثيق نطاق قبل الإطلاق.</li>
+<li>ترويسات أمان ونهج CSP في <code>next.config.mjs</code> (مع السماح بـ <code>unsafe-eval</code> في التطوير فقط)، ومراجعة موثّقة في <code>SECURITY-REVIEW.md</code>.</li>
+<li>تغيير بريد حساب المؤلف إلى <code>ar5061725@gmail.com</code> مع الإبقاء على بيانات الهوية.</li>
+</ol>
+
+<h2>5. آلية تقييم النصوص (وفق ملف «آلية تقييم النصوص»)</h2>
+<ol>
+<li>نموذج تقييم v1 بثمانية معايير موزونة: الإجمالي = مجموع (الدرجة × الوزن) ÷ 10.</li>
+<li>عتبات القرار: 80 و65، وفرق 15 بين المراجعين يستدعي <b>التحكيم</b> ثم الوسيط.</li>
+<li>تسجيل القرار (<code>record_decision</code>) ثم نشر النتيجة (<code>publish_review_result</code>) كلقطة لا تتغير.</li>
+<li>شاشات اللجنة مربوطة بالبيانات: <code>CommitteeReview</code> و<code>RoundDecision</code> و<code>AssignReviewerPanel</code> و<code>CriterionField</code> و<code>NoteEditor</code> و<code>DecisionPicker</code>.</li>
+<li>إقرار تعارض المصالح من المراجع، ومنع إعادة إسناد النص بعد التعارض.</li>
+<li>مراجعة تجريبية فعلية انتهت بنتيجة 76.5، وإسناد وقرار ونشر من حساب المشرف.</li>
+</ol>
+
+<h2>6. الدفع (MyFatoorah تجريبي)</h2>
+<ol>
+<li>رسوم التقديم <b>10.000 د.ك</b> لكل نص، وتُقرأ من قاعدة البيانات.</li>
+<li>دالة Edge <code>payment-create</code> (تتطلب JWT) تُنشئ الفاتورة وتُرجع رابط الدفع؛ والمفاتيح في أسرار Edge وملف <code>.env.local</code> فقط.</li>
+<li>التأكيد بطريقتين دون تسجيل ويبهوك: صفحة العودة (<code>confirmPaymentOnReturn</code>) ومهمة مجدولة تسأل المزوّد (<code>reconcilePendingPayments</code>)، وكلاهما عبر <code>apply_payment_event</code> الآمن للتكرار.</li>
+<li>شاشات الدفع: ملخص الطلب، اختيار الطريقة، التحويل لصفحة المزوّد، ثم نجاح أو إعادة محاولة.</li>
+<li>إصلاح: المزوّد يرجع النطاق <code>demo.MyFatoorah.com</code> فرفضته القاعدة، فاستُخدم <code>new URL().href</code>.</li>
+<li><b>إصلاح الأخير (من فحص الفيديو):</b> المزوّد يعيد العملة <code>KD</code> بينما نخزّن <code>KWD</code>، فاعتُبرت الدفعة الناجحة غير مطابقة وعُزلت وبقي الطلب «بانتظار الدفع». وُحِّدت العملة وأُعيدت معالجة الدفعة، فصارت «مدفوعة» وصدر الإيصال وتحوّل الطلب إلى «تم الاستلام».</li>
+<li>شاشة النجاح فيها الآن زر <b>العودة للرئيسية</b> وزر متابعة الطلبات، وشاشة الفشل فيها <b>إعادة المحاولة</b>.</li>
+<li>مسارات <code>/api/payments/webhook</code> و<code>/api/payments/reconcile</code> و<code>/api/submissions/scan</code>.</li>
+</ol>
+
+<h2>7. الاختبارات والتحقق</h2>
+<table>
+<tr><th>المجال</th><th>ما تم</th></tr>
+<tr><td>اختبارات الوحدة</td><td>Vitest لـ <code>identity</code> و<code>review</code> (مع <code>rollup/wasm-node</code>)</td></tr>
+<tr><td>طبقة قاعدة البيانات</td><td>سكربتات: مراجعة، هجمات، تعارض، دفع (<code>committee-e2e</code>, <code>attack</code>, <code>conflict-*</code>, <code>pay-e2e</code>)</td></tr>
+<tr><td>الواجهة</td><td>مراجع يقيّم، مشرف يسند ويقرر وينشر، إعلان تعارض، استعادة كلمة المرور طرفاً لطرف</td></tr>
+<tr><td>الجودة</td><td><code>tsc --noEmit</code> بلا أخطاء، وإعداد ESLint</td></tr>
+<tr><td>الفيديو</td><td>تحليل تسجيل هاتف 350 ثانية كشف عطل العملة أعلاه</td></tr>
+</table>
+
+<h2>8. النشر</h2>
+<ol>
+<li>كل تعديل يُدفع إلى GitHub (فرع main) ثم يُنشر على Vercel بـ <code>vercel --prod</code> وفق التعليمات المحفوظة.</li>
+<li>متغيرات البيئة تُدفع إلى Vercel عبر سكربت؛ وأُصلحت مرة قيمة فيها محرف خفي سبّب خطأ ترميز.</li>
+<li>آخر إصدارين: <code>5450f3d</code> (توحيد العملة) و<code>f429c33</code> (زر العودة للرئيسية).</li>
+</ol>
+
+<h2>9. أخطاء واجهتها وحلولها</h2>
+<table>
+<tr><th>المشكلة</th><th>الحل</th></tr>
+<tr><td>خطأ 550 من Resend في وضع الاختبار</td><td>تغيير بريد الحساب، ورسالة خطأ ودّية، والتوصية بتوثيق نطاق</td></tr>
+<tr><td>تلف مجلد <code>.next</code> عند البناء أثناء التطوير</td><td>إيقاف الخادم وحذف <code>.next</code> وإعادة التشغيل</td></tr>
+<tr><td>إعدادات PowerShell (الاقتباس والمحارف)</td><td>الاعتماد على أداة Edit وسكربتات Node</td></tr>
+<tr><td>دفع إجباري (force push) رُفض</td><td>نُفِّذ بعد موافقة صريحة من المستخدم</td></tr>
+</table>
+
+<h2>10. المتبقي قبل الإطلاق</h2>
+<ul>
+<li class="todo">توثيق نطاق في Resend وتغيير عنوان المرسل.</li>
+<li class="todo">تدوير الأسرار المكشوفة أثناء العمل: مفتاح الخدمة، سر المهمة المجدولة، رمز MyFatoorah.</li>
+<li class="todo">منح حساب حقيقي دور <code>committee_manager</code> (الحساب الحالي مؤلف فقط).</li>
+<li class="todo">حساب MyFatoorah إنتاجي ورمز إنتاج.</li>
+<li class="todo">رفع الحد الأدنى لكلمة المرور في Supabase إلى 8 فأكثر.</li>
+<li class="todo">شاشات ما زالت بيانات تجريبية: الكتالوج المعتمد، الإشعارات، الإيصالات، الدعم، تقديم نسخة معدّلة.</li>
+<li class="todo">لا يوجد فحص فيروسات للملفات المرفوعة.</li>
+<li class="todo">توسيع الاختبارات الآلية وقواعد ESLint.</li>
+</ul>
+</body>
+</html>
