@@ -39,7 +39,7 @@ export function IdentityFields({ values, errors, confirmed, onChange, onConfirm 
       </section>
 
       <TextField label="الرقم المدني" ltr inputMode="numeric" maxLength={12} placeholder="12 رقماً" autoComplete="off" {...field('civilId')} />
-      <TextField label="تاريخ الميلاد" type="date" ltr autoComplete="bday" {...field('birthDate')} />
+      <TextField label="تاريخ الميلاد" type="date" lang="ar" hint="اختر اليوم والشهر والسنة من التقويم" autoComplete="bday" max={new Date().toISOString().slice(0, 10)} {...field('birthDate')} />
       <TextField label="الرقم المسلسل للبطاقة المدنية" ltr inputMode="numeric" maxLength={10} placeholder="10 أرقام (خلف البطاقة)" autoComplete="off" {...field('cardSerial')} />
       <TextField label="الجنسية" placeholder="كويتي" {...field('nationality')} />
 
