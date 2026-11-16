@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { IDENTITY_GUIDE } from '@/lib/identity';
 import type { IdentityErrors, IdentityValues } from '@/lib/identity';
 import { TextField } from '@/components/ui/TextField';
@@ -15,6 +16,20 @@ interface Props {
 
 /** حقول الهوية المنقولة من البطاقة المدنية مع الدليل الإرشادي والإقرار الإلزامي بمطابقة البيانات. */
 export function IdentityFields({ values, errors, confirmed, onChange, onConfirm }: Props) {
+  // تاريخ الميلاد بثلاث خانات رقمية (حقل التاريخ الأصلي يعرض نصاً معكوساً في المتصفحات العربية)
+  const [parts, setParts] = useState(() => {
+    const [y = '', m = '', d = ''] = values.birthDate.split('-');
+    return { d, m, y };
+  });
+  function setPart(key: 'd' | 'm' | 'y', raw: string) {
+    const next = { ...parts, [key]: raw.replace(/\D/g, '') };
+    setParts(next);
+    const valid = next.d.length >= 1 && next.m.length >= 1 && next.y.length === 4;
+    const iso = valid ? `${next.y}-${next.m.padStart(2, '0')}-${next.d.padStart(2, '0')}` : '';
+    const real = iso && !Number.isNaN(Date.parse(iso)) && new Date(iso).toISOString().slice(0, 10) === iso ? iso : '';
+    onChange('birthDate', real);
+  }
+
   const field = (key: keyof IdentityValues) => ({
     value: values[key],
     error: errors[key],
@@ -39,7 +54,19 @@ export function IdentityFields({ values, errors, confirmed, onChange, onConfirm 
       </section>
 
       <TextField label="الرقم المدني" ltr inputMode="numeric" maxLength={12} placeholder="12 رقماً" autoComplete="off" {...field('civilId')} />
-      <TextField label="تاريخ الميلاد" type="date" lang="ar" hint="اختر اليوم والشهر والسنة من التقويم" autoComplete="bday" max={new Date().toISOString().slice(0, 10)} {...field('birthDate')} />
+      <fieldset className={styles.address}>
+        <legend>تاريخ الميلاد (كما في البطاقة)</legend>
+        <div className={styles.dateRow}>
+          <TextField label="اليوم" ltr inputMode="numeric" maxLength={2} placeholder="01" value={parts.d} onChange={(e) => setPart('d', e.target.value)} />
+          <TextField label="الشهر" ltr inputMode="numeric" maxLength={2} placeholder="10" value={parts.m} onChange={(e) => setPart('m', e.target.value)} />
+          <TextField label="السنة" ltr inputMode="numeric" maxLength={4} placeholder="1984" value={parts.y} onChange={(e) => setPart('y', e.target.value)} />
+        </div>
+        {errors.birthDate && (
+          <p role="alert" className={styles.error}>
+            {errors.birthDate}
+          </p>
+        )}
+      </fieldset>
       <TextField label="الرقم المسلسل للبطاقة المدنية" ltr inputMode="numeric" maxLength={10} placeholder="10 أرقام (خلف البطاقة)" autoComplete="off" {...field('cardSerial')} />
       <TextField label="الجنسية" placeholder="كويتي" {...field('nationality')} />
 
