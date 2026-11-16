@@ -20,6 +20,8 @@ export const ROUTES = {
   receipts: '/receipts',
   guide: '/guide',
   support: '/support',
+  memo: '/learning/series-engineering',
+  memoRead: '/learning/series-engineering/read',
 } as const;
 
 /** مسارات قديمة (النسخة التجريبية الأولى) تُحوَّل تلقائياً إلى المسارات الجديدة. */

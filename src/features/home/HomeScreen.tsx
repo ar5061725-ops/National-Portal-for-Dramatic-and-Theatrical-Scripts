@@ -3,6 +3,7 @@ import { SITE } from '@/config/site';
 import { PageBody } from '@/components/layout/PageBody';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Logo } from '@/components/ui/Logo';
+import { MemoPromoCard } from './MemoPromoCard';
 import { ServiceCard } from './ServiceCard';
 import styles from './HomeScreen.module.css';
 
@@ -27,7 +28,7 @@ export function HomeScreen() {
         }
       />
       <PageBody gap={18}>
-        {/* الإجراء الرئيس: تقديم نص جديد. الثاني: النصوص المجازة. */}
+        {/* الإجراء الرئيس: تقديم نص جديد. الثاني: النصوص المجازة. ثم بطاقة المذكرة التعليمية. */}
         <ServiceCard
           primary
           href={ROUTES.newSubmission}
@@ -43,6 +44,7 @@ export function HomeScreen() {
           title="النصوص المجازة"
           description="تصفّح النصوص المعتمدة وبياناتها المختصرة وتقييمها، واطلب التواصل مع الكاتب"
         />
+        <MemoPromoCard />
       </PageBody>
     </>
   );
