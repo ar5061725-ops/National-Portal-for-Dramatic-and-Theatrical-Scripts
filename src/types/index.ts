@@ -115,14 +115,20 @@ export interface ProfileData {
 
 /** عنصر في قائمة المراجعة: نسخة منزوعة الهوية تُعرَّف برمز الطلب فقط. */
 export interface CommitteeQueueItem {
+  /** معرّف التعيين (assignment) */
   id: string;
   code: string;
   meta: string;
+  /** أقرّ المراجع بعدم وجود تعارض مصالح */
+  acknowledged: boolean;
+  isArbitration: boolean;
 }
 
 export interface CommitteeOverview {
-  stats: { pending: number; revised: number; decided: number };
+  stats: { pending: number; arbitration: number; completed: number };
   queue: CommitteeQueueItem[];
+  /** هل المستخدم مشرف (يظهر له رابط قرارات الجولات) */
+  isManager: boolean;
 }
 
 export interface ReviewNoteInput {
@@ -159,16 +165,44 @@ export interface RoundReviewSummary {
   score: number | null;
   recommendation: DecisionId | null;
   isArbitration: boolean;
+  submitted: boolean;
+  conflictDeclared: boolean;
 }
+
+export type RoundStatus = 'collecting' | 'arbitration' | 'awaiting_decision' | 'decided' | 'published' | 'cancelled';
 
 /** ملخص جولة التقييم للمشرف: يُظهر الدرجات المرسلة دون هوية المراجعين. */
 export interface RoundSummary {
   roundId: string;
   code: string;
-  status: 'collecting' | 'arbitration' | 'awaiting_decision' | 'decided' | 'published';
+  status: RoundStatus;
   aggregateScore: number | null;
   recommended: DecisionId | null;
+  /** معرّف القرار بعد اعتماده (يلزم لنشر النتيجة) */
+  decisionId: string | null;
   reviews: RoundReviewSummary[];
+}
+
+export interface RoundListItem {
+  roundId: string;
+  code: string;
+  status: RoundStatus;
+  submittedCount: number;
+  aggregateScore: number | null;
+}
+
+/** طلب مختوم ينتظر تعيين مراجعين. */
+export interface AssignableSubmission {
+  versionId: string;
+  code: string;
+  meta: string;
+  assignedCount: number;
+  roundStatus: RoundStatus | null;
+}
+
+export interface ReviewerOption {
+  id: string;
+  name: string;
 }
 
 export interface RoundDecisionInput {

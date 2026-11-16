@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { ROUTES } from '@/config/routes';
 import { DECISIONS, REVIEW_CRITERIA, REVIEW_POLICY } from '@/config/requests';
@@ -12,7 +13,7 @@ import type { CommitteeOverview, CriterionScoreInput, DecisionId, ReviewNoteInpu
 import { PageBody } from '@/components/layout/PageBody';
 import { BackButton, PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { StatePanel } from '@/components/ui/StatePanel';
 import { FormError } from '@/components/ui/FormError';
@@ -27,8 +28,9 @@ function initialScores(): Record<string, CriterionScoreInput> {
 }
 
 export function CommitteeReview({ overview }: { overview: CommitteeOverview }) {
+  const router = useRouter();
   const [currentId, setCurrentId] = useState(overview.queue[0]?.id ?? '');
-  const [acknowledged, setAcknowledged] = useState<Set<string>>(() => new Set());
+  const [acknowledged, setAcknowledged] = useState<Set<string>>(() => new Set(overview.queue.filter((q) => q.acknowledged).map((q) => q.id)));
   const [conflict, setConflict] = useState(false);
   const [scores, setScores] = useState(initialScores);
   const [recommendation, setRecommendation] = useState<DecisionId | null>(null);
@@ -49,8 +51,8 @@ export function CommitteeReview({ overview }: { overview: CommitteeOverview }) {
 
   const stats = [
     { value: overview.stats.pending, label: 'بانتظار المراجعة' },
-    { value: overview.stats.revised, label: 'تعديلات واردة' },
-    { value: overview.stats.decided, label: 'تم البت فيها' },
+    { value: overview.stats.arbitration, label: 'مهام تحكيم' },
+    { value: overview.stats.completed, label: 'أُنجزت' },
   ];
 
   function selectItem(id: string) {
@@ -78,7 +80,7 @@ export function CommitteeReview({ overview }: { overview: CommitteeOverview }) {
     <>
       <PageHeader
         tone="dark"
-        start={<BackButton href={ROUTES.login} />}
+        start={<BackButton href={ROUTES.home} />}
         end={<Badge tone="onDark">عضو لجنة المراجعة</Badge>}
         title="لوحة اللجنة"
         titleSize={24}
@@ -95,6 +97,11 @@ export function CommitteeReview({ overview }: { overview: CommitteeOverview }) {
       </PageHeader>
 
       <PageBody>
+        {overview.isManager && (
+          <ButtonLink href={ROUTES.committeeDecisions} variant="outline" size="md" block>
+            قرارات الجولات وتعيين المراجعين
+          </ButtonLink>
+        )}
         <h2 className={styles.heading}>اختر نصاً للمراجعة</h2>
 
         {overview.queue.length === 0 ? (
@@ -138,7 +145,11 @@ export function CommitteeReview({ overview }: { overview: CommitteeOverview }) {
                   title="أُرسل تقييمك وأُقفل"
                   description={`الطلب ${current.code}: المجموع ${scoreText(save.data?.total ?? total, 100)} وتوصيتك «${chosenLabel}». القرار النهائي للمشرف بعد اكتمال التقييمات، ولا يظهر للمؤلف شيء قبل نشر النتيجة.`}
                 >
-                  <Button variant="outline" size="md" onClick={() => selectItem(currentId)}>
+                  <Button variant="outline" size="md" onClick={() => {
+                      const next = overview.queue.find((q) => q.id !== currentId);
+                      selectItem(next?.id ?? '');
+                      router.refresh();
+                    }}>
                     مراجعة نص آخر
                   </Button>
                 </StatePanel>

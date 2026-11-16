@@ -14,6 +14,16 @@ export function suggestedDecision(total: number): DecisionId {
   return 'reject';
 }
 
+/** مقابلات الأنواع بين الواجهة (approve/revise/reject) والقاعدة (approved/revision_requested/rejected). */
+export type DbOutcome = 'approved' | 'revision_requested' | 'rejected';
+const TO_DB: Record<DecisionId, DbOutcome> = { approve: 'approved', revise: 'revision_requested', reject: 'rejected' };
+export function toDbOutcome(id: DecisionId): DbOutcome {
+  return TO_DB[id];
+}
+export function fromDbOutcome(value: string | null | undefined): DecisionId | null {
+  return (Object.keys(TO_DB) as DecisionId[]).find((k) => TO_DB[k] === value) ?? null;
+}
+
 export function scoreBandLabel(score: number): string {
   return SCORE_BANDS.find((b) => score <= b.max)?.label ?? '';
 }
