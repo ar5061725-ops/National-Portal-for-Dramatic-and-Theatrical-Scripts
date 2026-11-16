@@ -65,7 +65,10 @@ export function PaymentFlow({ requestId, serverSummary, paid, returnFailed }: Pa
             <Icon name="download" size={18} strokeWidth={2} />
             تحميل الإيصال
           </Button>
-          <ButtonLink href={ROUTES.submissions} size="lg" block>
+          <ButtonLink href={ROUTES.home} size="lg" block>
+            العودة للرئيسية
+          </ButtonLink>
+          <ButtonLink href={ROUTES.submissions} variant="outline" size="md" block>
             متابعة طلباتي
           </ButtonLink>
         </StatePanel>
