@@ -61,10 +61,21 @@ export interface FeedbackThread {
 }
 
 export interface PayableRequest {
+  /** رقم الطلب العام (NSP-…) */
   id: string;
+  /** معرّف الطلب في القاعدة (يُرسل لدالة الدفع) */
+  submissionId?: string;
   title: string;
   workDescription: string;
   filesCount: number;
+  /** رسم التقديم الحالي بالفلس (1000 فلس = 1 د.ك)؛ null إن لم يُضبط */
+  feeMinor?: number | null;
+}
+
+/** نتيجة دفع مؤكدة لطلب (من الخادم بعد التحقق من المزوّد). */
+export interface PaidResult {
+  publicNo: string;
+  receiptNo: string | null;
 }
 
 export interface AppNotification {

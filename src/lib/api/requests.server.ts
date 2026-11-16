@@ -1,6 +1,6 @@
 import { WORK_TYPES } from '@/config/submission';
 import { getServerSupabase } from '@/lib/supabase/server';
-import type { FeedbackThread, PayableRequest, RequestStatus, ScriptRequest } from '@/types';
+import type { FeedbackThread, PaidResult, PayableRequest, RequestStatus, ScriptRequest } from '@/types';
 import { ApiError } from './client';
 
 /** قراءات الطلبات من Supabase لمكوّنات الخادم. RLS تضمن أن المؤلف لا يرى إلا طلباته. */
@@ -173,6 +173,25 @@ export async function getPayableRequest(publicNo: string): Promise<PayableReques
     .eq('id', row.current_version_id)
     .maybeSingle();
   const { count } = await supabase.from('submission_files').select('id', { count: 'exact', head: true }).eq('version_id', row.current_version_id);
+  const { data: fee } = await supabase.rpc('get_current_fee');
   const v = (version as VersionRow | null) ?? undefined;
-  return { id: row.public_no, title: v?.title ?? '', workDescription: workLabel(v).meta, filesCount: count ?? 4 };
+  return {
+    id: row.public_no,
+    submissionId: row.id,
+    title: v?.title ?? '',
+    workDescription: workLabel(v).meta,
+    filesCount: count ?? 4,
+    feeMinor: (fee as { amount_minor: number | null } | null)?.amount_minor ?? null,
+  };
+}
+
+/** هل دُفع رسم هذا الطلب؟ يعيد رقم الإيصال إن وُجد (الحالة من القاعدة بعد تثبيت الدفع). */
+export async function getPaidResult(publicNo: string): Promise<PaidResult | null> {
+  const { supabase, userId } = await currentUserId();
+  const { data: sub } = await supabase.from('submissions').select('id, public_no, status').eq('public_no', publicNo).eq('author_id', userId).maybeSingle();
+  if (!sub || sub.status === 'awaiting_payment' || sub.status === 'draft') return null;
+  const { data } = await supabase.rpc('get_payment_status', { p_submission_id: sub.id });
+  const status = data as { state?: string; receipt_no?: string | null } | null;
+  if (status?.state !== 'paid') return null;
+  return { publicNo: sub.public_no, receiptNo: status.receipt_no ?? null };
 }

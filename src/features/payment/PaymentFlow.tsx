@@ -1,18 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { CURRENCY, MESSAGES, PLACEHOLDERS } from '@/config/site';
+import { CURRENCY, MESSAGES } from '@/config/site';
 import { ROUTES } from '@/config/routes';
 import { PAYMENT_MESSAGES, PAYMENT_METHODS } from '@/config/payment';
-import { REQUIRED_FILES } from '@/config/submission';
-import { payForSubmission } from '@/lib/api/payment';
-import { describeWork } from '@/lib/submission';
+import { startPayment } from '@/lib/api/payment';
 import { cn } from '@/lib/cn';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
-import { useSubmission } from '@/providers/SubmissionProvider';
 import { useToast } from '@/providers/ToastProvider';
-import type { PaymentMethodId, PayableRequest } from '@/types';
-import { PageSkeleton } from '@/components/feedback/PageSkeleton';
+import type { PaidResult, PaymentMethodId, PayableRequest } from '@/types';
 import { PageBody } from '@/components/layout/PageBody';
 import { BackButton, PageHeader } from '@/components/layout/PageHeader';
 import { Button, ButtonLink } from '@/components/ui/Button';
@@ -39,31 +35,49 @@ interface PaymentFlowProps {
   requestId: string;
   /** ملخص طلب سبق إرساله (يأتي من الخادم)؛ وإلا يُستخدم ملخص المسودة الحالية. */
   serverSummary: PayableRequest | null;
+  /** دفع مؤكد من الخادم (بعد العودة من المزوّد أو الويبهوك). */
+  paid: PaidResult | null;
+  /** عاد المستخدم من المزوّد والدفع لم يكتمل. */
+  returnFailed: boolean;
 }
 
-export function PaymentFlow({ requestId, serverSummary }: PaymentFlowProps) {
-  const { draft, hydrated, reset } = useSubmission();
+export function PaymentFlow({ requestId, serverSummary, paid, returnFailed }: PaymentFlowProps) {
   const { showToast } = useToast();
   const [method, setMethod] = useState<PaymentMethodId>('knet');
-  const payment = useAsyncAction((selected: PaymentMethodId) => payForSubmission(requestId, selected));
+  const payment = useAsyncAction((selected: PaymentMethodId) => startPayment(serverSummary?.submissionId ?? '', selected));
+  const summary = serverSummary;
 
-  if (!hydrated) return <PageSkeleton />;
-
-  const fromDraft = draft.requestNo === requestId && draft.title.trim().length > 0;
-  const summary: PayableRequest | null = fromDraft
-    ? {
-        id: requestId,
-        title: draft.title,
-        workDescription: describeWork(draft),
-        filesCount: REQUIRED_FILES.filter((f) => draft.files[f.id]).length,
-      }
-    : serverSummary;
-
-  // لا طلب مطابق للرابط (فتح مباشر، أو الطلب ليس لهذا الحساب)
-  if (!summary && !payment.isSuccess) {
+  // دفع مؤكد من الخادم
+  if (paid) {
     return (
       <PageBody>
-        <StatePanel tone="info" icon="edit" fill as="h1" title="لا يوجد طلب لإكماله" description="ابدأ بتعبئة بيانات نصك أولاً ثم تابع إلى الدفع من صفحة طلباتي.">
+        <StatePanel tone="success" icon="check" fill as="h1" title="تم استلام نصك بنجاح" description={PAYMENT_MESSAGES.paid}>
+          <p className={styles.orderNo}>
+            رقم الطلب: <b dir="ltr">{paid.publicNo}</b>
+          </p>
+          {paid.receiptNo && (
+            <p className={styles.orderNo}>
+              رقم الإيصال: <b dir="ltr">{paid.receiptNo}</b>
+            </p>
+          )}
+          <p className={styles.nextStep}>سيُراجع نصك من قبل اللجنة المختصة، وستصلك رسالة على بريدك الإلكتروني عند صدور القرار.</p>
+          <Button variant="secondary" size="md" block onClick={() => showToast(MESSAGES.receiptDownloaded)}>
+            <Icon name="download" size={18} strokeWidth={2} />
+            تحميل الإيصال
+          </Button>
+          <ButtonLink href={ROUTES.submissions} size="lg" block>
+            متابعة طلباتي
+          </ButtonLink>
+        </StatePanel>
+      </PageBody>
+    );
+  }
+
+  // لا طلب مطابق للرابط (فتح مباشر، أو الطلب ليس لهذا الحساب أو لا ينتظر الدفع)
+  if (!summary) {
+    return (
+      <PageBody>
+        <StatePanel tone="info" icon="edit" fill as="h1" title="لا يوجد طلب بانتظار الدفع" description="ابدأ بتقديم نص جديد، أو افتح طلباتي لمتابعة حالة طلبك.">
           <ButtonLink href={ROUTES.newSubmission} size="md">
             تقديم نص جديد
           </ButtonLink>
@@ -72,33 +86,16 @@ export function PaymentFlow({ requestId, serverSummary }: PaymentFlowProps) {
     );
   }
 
-  if (payment.isLoading) {
+  // أُنشئت الفاتورة وجارٍ تحويلك لصفحة المزوّد
+  if (payment.isLoading || payment.isSuccess) {
     return (
       <PageBody>
-        <StatePanel tone="loading" fill title={PAYMENT_MESSAGES.pending} description="لا تغلق الصفحة، سيستغرق ذلك ثوانٍ قليلة" />
+        <StatePanel tone="loading" fill title="جارٍ تحويلك إلى صفحة الدفع" description="لا تغلق الصفحة، سيستغرق ذلك ثوانٍ قليلة" />
       </PageBody>
     );
   }
 
-  if (payment.isSuccess) {
-    return (
-      <PageBody>
-        <StatePanel tone="success" icon="check" fill as="h1" title="تم استلام نصك بنجاح" description={PAYMENT_MESSAGES.paid}>
-          <p className={styles.orderNo}>
-            رقم الطلب: <b dir="ltr">{payment.data?.orderNo}</b>
-          </p>
-          <p className={styles.nextStep}>سيُراجع نصك من قبل اللجنة المختصة، وستصلك رسالة على بريدك الإلكتروني عند صدور القرار.</p>
-          <Button variant="secondary" size="md" block onClick={() => showToast(MESSAGES.receiptDownloaded)}>
-            <Icon name="download" size={18} strokeWidth={2} />
-            تحميل الإيصال
-          </Button>
-          <ButtonLink href={ROUTES.submissions} size="lg" block onClick={reset}>
-            متابعة طلباتي
-          </ButtonLink>
-        </StatePanel>
-      </PageBody>
-    );
-  }
+  const feeText = summary.feeMinor == null ? '—' : (summary.feeMinor / 1000).toFixed(3);
 
   return (
     <>
@@ -117,7 +114,7 @@ export function PaymentFlow({ requestId, serverSummary }: PaymentFlowProps) {
           <div className={styles.fee}>
             <span className={styles.sectionTitle}>رسوم التقديم</span>
             <span className={styles.feeAmount}>
-              {PLACEHOLDERS.fee} {CURRENCY}
+              {feeText} {CURRENCY}
             </span>
           </div>
         </Card>
@@ -147,7 +144,7 @@ export function PaymentFlow({ requestId, serverSummary }: PaymentFlowProps) {
           ))}
         </fieldset>
 
-        {payment.isError && (
+        {(payment.isError || returnFailed) && (
           <div role="alert" className={styles.error}>
             <Icon name="alert" size={20} strokeWidth={2} />
             <span>
@@ -158,7 +155,7 @@ export function PaymentFlow({ requestId, serverSummary }: PaymentFlowProps) {
         )}
 
         <Button size="xl" elevated block onClick={() => void payment.run(method)}>
-          {payment.isError ? 'إعادة المحاولة' : 'ادفع الآن'}
+          {payment.isError || returnFailed ? 'إعادة المحاولة' : 'ادفع الآن'}
         </Button>
         <p className={styles.secure}>
           <Icon name="lock" size={14} strokeWidth={2} />
