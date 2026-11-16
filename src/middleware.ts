@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from 'next/server';
  * بوّابة الدخول لكل الموقع: لا يُتصفَّح شيء قبل تسجيل الدخول، عدا الصفحات الآتية.
  * التحقق من الشهادة (/verify) يبقى عاماً لأن الجهات الخارجية تستخدمه، وواجهات /api تتحقق من الهوية بنفسها.
  */
-const PUBLIC_EXACT = new Set(['/', '/login', '/committee/login']);
+const PUBLIC_EXACT = new Set(['/', '/login', '/committee/login', '/reset-password']);
 const PUBLIC_PREFIXES = ['/verify/'];
 
 const IDENTITY_PATH = '/account/identity';
@@ -75,5 +75,5 @@ export async function middleware(request: NextRequest) {
 export const config = {
   // يستثني ملفات Next الثابتة وملفات public المعروفة بأسمائها وواجهات /api (لكل منها تحققها الخاص).
   // لا نستثني «أي مسار فيه نقطة»: مقاطع المسار الديناميكية (مثل /certificates/x.y) كانت ستتجاوز بوابة الدخول.
-  matcher: ['/((?!_next/static|_next/image|favicon\\.ico$|logo\\.png$|learning/series-engineering\\.pdf$|api/).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon\\.ico$|logo\\.png$|api/).*)'],
 };

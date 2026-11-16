@@ -108,7 +108,10 @@ export function LoginForm({ variant = 'author' }: { variant?: 'author' | 'commit
 
   // الرابط /login?mode=register (من صفحة البداية) يفتح تبويب التسجيل مباشرة
   useEffect(() => {
-    if (!isCommittee && new URLSearchParams(window.location.search).get('mode') === 'register') setMode('register');
+    const params = new URLSearchParams(window.location.search);
+    if (!isCommittee && params.get('mode') === 'register') setMode('register');
+    if (params.get('reset') === 'done') showToast('تم تغيير كلمة المرور، سجّل الدخول بها');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCommittee]);
 
   // التوجيه بعد النجاح يعتمد على الحالة (الدوال لا تعيد قيمة)
@@ -116,7 +119,7 @@ export function LoginForm({ variant = 'author' }: { variant?: 'author' | 'commit
     if (!succeeded) return;
     // وجهة العودة بعد الدخول (من ?next=) مع قبول المسارات الداخلية فقط لمنع التحويل لمواقع خارجية
     const next = new URLSearchParams(window.location.search).get('next');
-    router.replace(isSafeInternalPath(next) ? next : isCommittee ? ROUTES.committee : ROUTES.newSubmission);
+    router.replace(isSafeInternalPath(next) ? next : isCommittee ? ROUTES.committee : ROUTES.home);
     router.refresh();
   }, [succeeded, router, isCommittee]);
 

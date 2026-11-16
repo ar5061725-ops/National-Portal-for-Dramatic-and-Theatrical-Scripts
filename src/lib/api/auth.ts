@@ -91,8 +91,49 @@ export async function resendConfirmation(email: string): Promise<void> {
 
 export async function requestPasswordReset(email: string): Promise<void> {
   if (!EMAIL_PATTERN.test(email.trim())) throw new ApiError('أدخل بريدك الإلكتروني أولاً', 422);
-  const { error } = await getSupabase().auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/login` });
+  const { error } = await getSupabase().auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/reset-password` });
   if (error) throw toApiError(error);
+}
+
+/** هل توجد جلسة (جلسة الاسترداد من رابط البريد أو جلسة دخول)؟ */
+export async function hasSession(): Promise<boolean> {
+  const { data } = await getSupabase().auth.getSession();
+  return Boolean(data.session);
+}
+
+/** تعيين كلمة مرور جديدة للجلسة الحالية (من رابط استعادة كلمة المرور). */
+export async function setNewPassword(password: string): Promise<void> {
+  if (password.length < 8) throw new ApiError('كلمة المرور يجب ألا تقل عن 8 أحرف', 422);
+  const { error } = await getSupabase().auth.updateUser({ password });
+  if (error) throw toApiError(error);
+}
+
+/** رقم كويتي من 8 أرقام أو دولي بصيغة +…؛ يعيد الصيغة الدولية أو null إن لم يصحّ. */
+export function normalizePhone(raw: string): string | null {
+  const compact = raw.replace(/[\s-]/g, '');
+  if (/^\d{8}$/.test(compact)) return `+965${compact}`;
+  return /^\+[1-9]\d{6,14}$/.test(compact) ? compact : null;
+}
+
+export interface ProfileUpdate {
+  name: string;
+  phone: string;
+}
+
+/** تعديل الاسم والهاتف (حقول مسموحة فقط؛ الرقم المدني وبيانات البطاقة لا تُعدَّل من هنا). */
+export async function updateMyProfile(input: ProfileUpdate): Promise<void> {
+  const name = input.name.trim();
+  const phone = normalizePhone(input.phone);
+  if (name.length < 2) throw new ApiError('أدخل الاسم الكامل', 422);
+  if (!phone) throw new ApiError('رقم الهاتف غير صحيح (8 أرقام كويتية أو بصيغة دولية +…)', 422);
+
+  const supabase = getSupabase();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) throw new ApiError('انتهت جلستك، سجّل الدخول من جديد', 401);
+  const { error: profileError } = await supabase.from('profiles').update({ full_name: name.slice(0, 120), phone_e164: phone }).eq('id', auth.user.id);
+  if (profileError) throw new ApiError('تعذّر حفظ البيانات، حاول مرة أخرى', 500);
+  const { error: metaError } = await supabase.auth.updateUser({ data: { full_name: name, phone } });
+  if (metaError) throw toApiError(metaError);
 }
 
 export async function logout(): Promise<void> {

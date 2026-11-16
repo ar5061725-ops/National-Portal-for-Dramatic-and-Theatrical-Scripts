@@ -33,7 +33,7 @@ export function IdentityCompletion() {
 
   useEffect(() => {
     if (!save.isSuccess) return;
-    router.replace(ROUTES.newSubmission);
+    router.replace(ROUTES.home);
     router.refresh();
   }, [save.isSuccess, router]);
 

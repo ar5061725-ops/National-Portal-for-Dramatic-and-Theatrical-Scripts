@@ -15,8 +15,12 @@ const ITEMS: { href: string; label: string; icon: IconName }[] = [
   { href: ROUTES.account, label: 'حسابي', icon: 'user' },
 ];
 
+/** صفحات لا يظهر فيها الشريط (شاشات الدخول والبداية وإعادة التعيين ولوحة اللجنة). */
+const HIDDEN_EXACT = new Set(['/', '/login', '/committee/login', '/reset-password']);
+
 export function BottomNav() {
   const pathname = usePathname();
+  if (HIDDEN_EXACT.has(pathname) || pathname === '/committee' || pathname.startsWith('/committee/')) return null;
   return (
     <nav aria-label="التنقل الرئيسي" className={styles.nav}>
       {ITEMS.map((item) => {

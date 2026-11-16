@@ -14,7 +14,6 @@ const MENU: { label: string; href: string; icon: IconName }[] = [
   { label: 'الإشعارات', href: ROUTES.notifications, icon: 'bell' },
   { label: 'الإيصالات والمدفوعات', href: ROUTES.receipts, icon: 'receipt' },
   { label: 'الشروط والإرشادات', href: ROUTES.guide, icon: 'info' },
-  { label: 'المذكرة التعليمية', href: ROUTES.memo, icon: 'fileLines' },
   { label: 'الدعم', href: ROUTES.support, icon: 'mail' },
 ];
 
