@@ -33,6 +33,10 @@ function toApiError(error: AuthError): ApiError {
   if (code === 'unexpected_failure' && /database error saving new user/i.test(error.message)) {
     return new ApiError('تعذّر إنشاء الحساب: راجع بيانات البطاقة المدنية، أو أن الرقم المدني مسجَّل بحساب آخر', 422);
   }
+  // فشل مزوّد البريد (SMTP) عند إرسال التأكيد أو الاستعادة: ليس انقطاع إنترنت عند المستخدم
+  if (/error sending .*email/i.test(error.message)) {
+    return new ApiError('تعذّر إرسال رسالة البريد حالياً. حاول لاحقاً، وإن تكرر فتواصل مع الدعم.', 503);
+  }
   if (error.name === 'AuthRetryableFetchError' || status === 0) return new ApiError(`تعذّر الاتصال بالخادم، تحقق من الإنترنت وأعد المحاولة (${error.message.slice(0, 80)})`, 503);
   if (code === 'email_address_not_authorized') return new ApiError('هذا البريد غير مسموح له بالاستلام بعد؛ فعّل بريد SMTP المخصص للمشروع', 403);
   if (code === 'signup_disabled') return new ApiError('التسجيل معطّل مؤقتاً', 403);
