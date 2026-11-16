@@ -22,6 +22,7 @@ const RPC_MESSAGES: Record<string, string> = {
   no_active_rubric: 'لا توجد نسخة معايير مفعّلة لهذا النوع',
   version_not_reviewable: 'هذه النسخة غير قابلة للمراجعة الآن',
   conflict_declared: 'سُجّل إعلان التعارض لهذا التعيين',
+  reviewer_declared_conflict: 'هذا المراجع أعلن تعارض مصالح على هذا الطلب ولا يُعاد تعيينه عليه',
 };
 
 function toApiError(message: string): ApiError {
