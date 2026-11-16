@@ -97,6 +97,13 @@ export async function getInvoiceStatus(key: string | number, keyType: 'InvoiceId
     status: data.InvoiceStatus,
     reference: data.CustomerReference,
     paidAmount: data.InvoiceValue,
-    currency: data.InvoiceTransactions?.[0]?.Currency ?? 'KWD',
+    currency: normalizeCurrency(data.InvoiceTransactions?.[0]?.Currency),
   };
+}
+
+/** المزوّد يعيد أحياناً رمزاً مختصراً (KD)؛ نوحّده إلى ISO (KWD) ليطابق ما نخزّنه. */
+export function normalizeCurrency(raw: string | undefined | null): string {
+  const code = (raw ?? '').trim().toUpperCase();
+  if (!code || code === 'KD' || code === 'KWD') return 'KWD';
+  return code;
 }
