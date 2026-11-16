@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { ROUTES } from '@/config/routes';
 import { DECISIONS, REVIEW_POLICY } from '@/config/requests';
 import { publishRoundResult, recordRoundDecision } from '@/lib/api/committee';
-import { cn } from '@/lib/cn';
 import { scoreText } from '@/lib/text';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import type { DecisionId, RoundSummary } from '@/types';
@@ -15,6 +14,8 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { StatePanel } from '@/components/ui/StatePanel';
 import { TextArea } from '@/components/ui/TextField';
+import { FormError } from '@/components/ui/FormError';
+import { DecisionPicker } from './DecisionPicker';
 import styles from './CommitteeReview.module.css';
 
 const label = (id: DecisionId | null) => DECISIONS.find((d) => d.id === id)?.label ?? '—';
@@ -48,7 +49,7 @@ export function RoundDecision({ round }: { round: RoundSummary }) {
           <ul className={styles.noteList}>
             {round.reviews.map((r) => (
               <li key={r.label}>
-                <b>{r.label}:</b> {r.score === null ? 'لم يُرسل' : `${scoreText(r.score)} / 100`} — توصية: {label(r.recommendation)}
+                <b>{r.label}:</b> {r.score === null ? 'لم يُرسل' : scoreText(r.score, 100)} — توصية: {label(r.recommendation)}
               </li>
             ))}
           </ul>
@@ -57,7 +58,7 @@ export function RoundDecision({ round }: { round: RoundSummary }) {
               {round.reviews.some((r) => r.isArbitration) ? 'الوسيط بعد التحكيم' : 'متوسط المراجعين'}
             </span>
             <span dir="ltr" className={styles.scoreValue}>
-              {round.aggregateScore === null ? '—' : scoreText(round.aggregateScore)}
+              {round.aggregateScore === null ? '—' : scoreText(round.aggregateScore, 100)}
             </span>
           </div>
           <p className={styles.conflictNote}>
@@ -72,11 +73,7 @@ export function RoundDecision({ round }: { round: RoundSummary }) {
             ) : (
               <div className={styles.form}>
                 <StatePanel tone="success" icon="check" title={`اعتُمد القرار: ${label(outcome)}`} description="لم يرَ المؤلف شيئاً بعد؛ النشر خطوة منفصلة." />
-                {publish.isError && (
-                  <p role="alert" className={styles.error}>
-                    {publish.error}
-                  </p>
-                )}
+                <FormError>{publish.isError ? publish.error : undefined}</FormError>
                 <Button size="lg" block loading={publish.isLoading} onClick={() => void publish.run(round.roundId)}>
                   نشر النتيجة للمؤلف
                 </Button>
@@ -90,23 +87,7 @@ export function RoundDecision({ round }: { round: RoundSummary }) {
                 void decide.run({ roundId: round.roundId, outcome, authorReason, internalReason });
               }}
             >
-              <div className={styles.fieldLabel} id="outcome-label">
-                القرار
-              </div>
-              <div className={styles.decisions} role="group" aria-labelledby="outcome-label">
-                {DECISIONS.map((d) => (
-                  <button
-                    key={d.id}
-                    type="button"
-                    aria-pressed={d.id === outcome}
-                    data-tone={d.tone}
-                    onClick={() => setOutcome(d.id)}
-                    className={cn('pressable', styles.decision)}
-                  >
-                    {d.label}
-                  </button>
-                ))}
-              </div>
+              <DecisionPicker label="القرار" value={outcome} onChange={setOutcome} />
               <TextArea label="السبب الذي يراه المؤلف (مطلوب)" value={authorReason} onChange={(e) => setAuthorReason(e.target.value)} />
               {differs && (
                 <TextArea
@@ -116,11 +97,7 @@ export function RoundDecision({ round }: { round: RoundSummary }) {
                   onChange={(e) => setInternalReason(e.target.value)}
                 />
               )}
-              {decide.isError && (
-                <p role="alert" className={styles.error}>
-                  {decide.error}
-                </p>
-              )}
+              <FormError>{decide.isError ? decide.error : undefined}</FormError>
               <Button type="submit" size="lg" block loading={decide.isLoading}>
                 اعتماد القرار
               </Button>

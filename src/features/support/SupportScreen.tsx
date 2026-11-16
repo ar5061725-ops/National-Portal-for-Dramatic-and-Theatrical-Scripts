@@ -15,6 +15,7 @@ import { Card } from '@/components/ui/Card';
 import { Logo } from '@/components/ui/Logo';
 import { StatePanel } from '@/components/ui/StatePanel';
 import { TextArea, TextField } from '@/components/ui/TextField';
+import { FormError } from '@/components/ui/FormError';
 import styles from './SupportScreen.module.css';
 
 const HELP_ACCORDION = HELP_ITEMS.map((h) => ({ id: h.id, title: h.title, content: <p className={styles.answer}>{h.answer}</p> }));
@@ -86,11 +87,7 @@ export function SupportScreen() {
                 onChange={(e) => setRequestNo(e.target.value)}
               />
               <TextArea label="اشرح المشكلة" value={message} onChange={(e) => setMessage(e.target.value)} />
-              {ticket.isError && (
-                <p role="alert" className={styles.error}>
-                  {ticket.error}
-                </p>
-              )}
+              <FormError>{ticket.isError ? ticket.error : undefined}</FormError>
               <Button type="submit" size="lg" block loading={ticket.isLoading}>
                 إرسال التذكرة
               </Button>

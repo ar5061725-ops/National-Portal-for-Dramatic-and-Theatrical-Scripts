@@ -38,7 +38,12 @@ export async function POST(req: Request) {
   const raw = await req.text();
   if (raw.length > 64 * 1024) return NextResponse.json({ error: 'too_large' }, { status: 413 });
 
-  let body: { Event?: string; Data?: Record<string, any> };
+  interface WebhookData {
+    Invoice?: { Id?: number | string };
+    InvoiceId?: number | string;
+    Transaction?: { Id?: number | string };
+  }
+  let body: { Event?: string; Data?: WebhookData };
   try {
     body = JSON.parse(raw);
   } catch {

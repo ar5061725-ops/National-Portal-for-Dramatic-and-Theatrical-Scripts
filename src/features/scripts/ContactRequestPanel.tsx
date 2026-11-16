@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/Card';
 import { Icon } from '@/components/ui/Icon';
 import { StatePanel } from '@/components/ui/StatePanel';
 import { TextArea } from '@/components/ui/TextField';
+import { FormError } from '@/components/ui/FormError';
 import styles from './ContactRequestPanel.module.css';
 
 interface ContactRequestPanelProps {
@@ -67,11 +68,7 @@ export function ContactRequestPanel({ scriptId, authorName }: ContactRequestPane
             value={purpose}
             onChange={(e) => setPurpose(e.target.value)}
           />
-          {request.isError && (
-            <p role="alert" className={styles.error}>
-              {request.error}
-            </p>
-          )}
+          <FormError>{request.isError ? request.error : undefined}</FormError>
           <div className={styles.actions}>
             <Button type="submit" size="md" loading={request.isLoading}>
               إرسال الطلب

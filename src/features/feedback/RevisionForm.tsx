@@ -10,6 +10,7 @@ import { Icon } from '@/components/ui/Icon';
 import { PdfFileInput } from '@/components/ui/PdfFileInput';
 import { StatePanel } from '@/components/ui/StatePanel';
 import { TextArea } from '@/components/ui/TextField';
+import { FormError } from '@/components/ui/FormError';
 import styles from './RevisionForm.module.css';
 
 /** رد المؤلف على ملاحظات اللجنة ورفع نسخة مستجيبة («إرسال النسخة المعدلة»). */
@@ -68,11 +69,7 @@ export function RevisionForm({ requestId }: { requestId: string }) {
         )}
       </Card>
 
-      {submit.isError && (
-        <p role="alert" className={styles.error}>
-          {submit.error}
-        </p>
-      )}
+      <FormError>{submit.isError ? submit.error : undefined}</FormError>
 
       <Button type="submit" size="xl" elevated block loading={submit.isLoading}>
         إرسال النسخة المعدلة
