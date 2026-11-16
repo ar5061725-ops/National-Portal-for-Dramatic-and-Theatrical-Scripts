@@ -9,7 +9,7 @@ function cors(origin: string | null) {
   const allowed = Deno.env.get('ALLOWED_ORIGIN') ?? '';
   return {
     'Access-Control-Allow-Origin': origin && origin === allowed ? origin : 'null',
-    'Access-Control-Allow-Headers': 'authorization, content-type',
+    'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     Vary: 'Origin',
   };
@@ -59,7 +59,13 @@ Deno.serve(async (req) => {
   // 4) إنشاء الفاتورة لدى المزوّد بمرجع ثابت. عند انقطاع الرد تبقى المحاولة creating ولا تُنشأ فاتورة بديلة.
   const base = Deno.env.get('MYFATOORAH_BASE_URL') ?? '';
   const expectedHost = environment === 'production' ? 'api.myfatoorah.com' : 'apitest.myfatoorah.com';
-  if (new URL(base).host !== expectedHost) return json({ error: 'provider_host_mismatch' }, 500, origin);
+  let host = '';
+  try {
+    host = new URL(base).host;
+  } catch {
+    return json({ error: 'provider_not_configured' }, 500, origin);
+  }
+  if (host !== expectedHost) return json({ error: 'provider_host_mismatch' }, 500, origin);
 
   const siteUrl = Deno.env.get('SITE_URL')!;
   let providerResponse: Response;
@@ -69,12 +75,13 @@ Deno.serve(async (req) => {
       headers: { Authorization: `Bearer ${Deno.env.get('MYFATOORAH_API_KEY')}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         NotificationOption: 'LNK',
+        CustomerName: userData.user.email ?? 'Author',
         InvoiceValue: reserved.amount_minor / 1000, // KWD: ثلاث خانات عشرية
         DisplayCurrencyIso: 'KWD',
         CustomerReference: reserved.merchant_ref,
-        CallBackUrl: `${siteUrl}/payments/${body.submission_id}`,
-        ErrorUrl: `${siteUrl}/payments/${body.submission_id}`,
-        Language: 'ar',
+        CallBackUrl: `${siteUrl}/payments/${reserved.public_no ?? body.submission_id}`,
+        ErrorUrl: `${siteUrl}/payments/${reserved.public_no ?? body.submission_id}`,
+        Language: 'AR',
       }),
       signal: AbortSignal.timeout(15_000),
     });
