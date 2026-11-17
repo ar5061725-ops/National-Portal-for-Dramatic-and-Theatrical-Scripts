@@ -27,7 +27,7 @@ const serif = Amiri({
 
 export const metadata: Metadata = {
   title: { default: SITE.name, template: `%s | ${SITE.shortName}` },
-  description: 'نموذج تجريبي مقدَّم كمقترح إلى معالي وزير الإعلام، ضمن مشروع تخرج معسكر بناء التطبيقات بالذكاء الاصطناعي لدى معهد كودد',
+  description: `${SITE.ministry} · ${SITE.country}`,
 };
 
 export const viewport: Viewport = {

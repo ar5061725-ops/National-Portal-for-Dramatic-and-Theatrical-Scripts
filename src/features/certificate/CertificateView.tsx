@@ -65,7 +65,7 @@ export function CertificateView({ certificate, qrSvg, verifyUrl }: CertificateVi
             </p>
             <h2 className={styles.heading}>شهادة إجازة نص</h2>
             <span className={styles.rule} aria-hidden="true" />
-            <p className={styles.statement}>شهادة تجريبية في نموذج البوابة المقترحة لإجازة النص (ليست رسمية)</p>
+            <p className={styles.statement}>تشهد البوابة الوطنية للنصوص الدرامية والمسرحية بإجازة النص</p>
             <p className={styles.title}>{certificate.title}</p>
 
             <div className={styles.fields}>
