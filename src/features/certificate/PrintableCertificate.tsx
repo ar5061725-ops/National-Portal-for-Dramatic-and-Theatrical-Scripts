@@ -51,7 +51,7 @@ export function PrintableCertificate({ certificate, qrSvg }: { certificate: Cert
                   <span />
                 </div>
                 <p className={styles.statement}>
-                  تشهد وزارة الإعلام بأن النص الموضحة بياناته أدناه قد اجتاز مراجعة لجنة النصوص وحصل على الإجازة، وأن حقوق ملكيته الفكرية محفوظة لمؤلفه.
+                  شهادة تجريبية لعرض الفكرة فقط (ليست صادرة عن وزارة الإعلام): النص الموضحة بياناته أدناه اجتاز مراجعة لجنة النصوص في هذا النموذج.
                 </p>
               </div>
 
@@ -85,7 +85,7 @@ export function PrintableCertificate({ certificate, qrSvg }: { certificate: Cert
                   <b>رئيس لجنة مراجعة النصوص</b>
                   <span>التوقيع</span>
                 </div>
-                <div className={styles.stamp}>الختم الرسمي</div>
+                <div className={styles.stamp}>نموذج تجريبي</div>
                 <div className={styles.qrBox}>
                   <QrCode svg={qrSvg} size={104} label="رمز QR للتحقق من الشهادة" />
                   <b dir="ltr" className={styles.verifyCode}>{certificate.verifyCode}</b>

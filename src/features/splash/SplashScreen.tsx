@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ROUTES } from '@/config/routes';
-import { SITE } from '@/config/site';
+import { DEMO, SITE } from '@/config/site';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { ButtonLink } from '@/components/ui/Button';
 import { Logo } from '@/components/ui/Logo';
@@ -27,7 +27,7 @@ export async function SplashScreen() {
         <Logo size={150} priority />
         <div className={styles.titles}>
           <p className={styles.ministry}>
-            {SITE.ministry} · {SITE.country}
+            مقترح إلى معالي وزير الإعلام · {SITE.country}
           </p>
           <h1 className={styles.title}>
             البوابة الوطنية
@@ -35,9 +35,13 @@ export async function SplashScreen() {
             للنصوص الدرامية والمسرحية
           </h1>
           <span className={styles.rule} aria-hidden="true" />
-          <p className={styles.lead}>منصة رسمية لتقديم النصوص الدرامية والمسرحية وتقييمها وإجازتها.</p>
+          <p className={styles.lead}>تصوّر تجريبي لمنصة تقديم النصوص الدرامية والمسرحية وتقييمها وإجازتها.</p>
         </div>
       </div>
+
+      <p className={styles.demo}>
+        <b>{DEMO.badge}</b> · {DEMO.full}
+      </p>
 
       <ol className={styles.steps} aria-label="خطوات الاستخدام">
         {STEPS.map((s) => (

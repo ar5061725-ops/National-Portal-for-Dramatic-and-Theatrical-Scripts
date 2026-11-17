@@ -53,7 +53,7 @@ export function VerifyScreen({ code, result }: VerifyScreenProps) {
                   </Badge>
                   <p className={styles.statusHint}>
                     {result.status === 'active'
-                      ? 'هذه الشهادة صادرة عن وزارة الإعلام وهي سارية المفعول.'
+                      ? 'شهادة تجريبية صادرة من النموذج المقترح، وليست وثيقة رسمية من وزارة الإعلام.'
                       : 'أُلغيت هذه الشهادة ولم تعد سارية. راجع الجهة المصدرة للتفاصيل.'}
                   </p>
                 </div>
